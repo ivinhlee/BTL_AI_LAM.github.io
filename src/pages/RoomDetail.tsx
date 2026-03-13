@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Loader2, AlertCircle, Calendar, Users, CheckCircle, User, Mail, BedDouble, Bath, Home, Lock, Heart } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, Calendar, Users, CheckCircle, User, Mail, BedDouble, Bath, Home, Lock, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Room } from '../types';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
@@ -34,6 +34,7 @@ export default function RoomDetail() {
   const [showToast, setShowToast] = useState<boolean>(false);
 
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
   // Cập nhật thông tin khi user thay đổi
   useEffect(() => {
@@ -247,19 +248,70 @@ export default function RoomDetail() {
           
           {/* Cột Trái: Thông tin chi tiết (70% trên Desktop) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Ảnh Bìa */}
-            <div className="rounded-3xl overflow-hidden aspect-video relative shadow-sm">
-              <img 
-                src={room.image_url} 
-                alt={room.title} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-bold text-slate-800 shadow-sm">
-                <MapPin className="w-4 h-4 text-emerald-500" />
-                {room.location}
-              </div>
-            </div>
+            {/* Image Slider */}
+            {(() => {
+              const images = room.image_url
+                ? room.image_url.split(',').map((u) => u.trim()).filter(Boolean)
+                : [];
+              const total = images.length;
+              const prev = () => { if (total > 1) setCurrentImageIndex((i) => (i - 1 + total) % total); };
+              const next = () => { if (total > 1) setCurrentImageIndex((i) => (i + 1) % total); };
+              const safeIndex = total > 0 ? Math.min(currentImageIndex, total - 1) : 0;
+
+              return (
+                <div className="rounded-3xl overflow-hidden aspect-video relative shadow-sm bg-slate-200 group">
+                  {total > 0 ? (
+                    <>
+                      <img
+                        key={safeIndex}
+                        src={images[safeIndex]}
+                        alt={`${room.title} - ảnh ${safeIndex + 1}`}
+                        className="w-full h-full object-cover transition-opacity duration-500"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/800x450?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh';
+                        }}
+                      />
+
+                      {/* Arrows */}
+                      {total > 1 && (
+                        <>
+                          <button
+                            onClick={prev}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            aria-label="Ảnh trước"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={next}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            aria-label="Ảnh tiếp theo"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+
+                          {/* Counter */}
+                          <div className="absolute bottom-3 right-3 bg-black/50 text-white text-sm font-medium px-3 py-1 rounded-full">
+                            {safeIndex + 1}/{total}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      Không có ảnh
+                    </div>
+                  )}
+
+                  {/* Location badge */}
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-bold text-slate-800 shadow-sm">
+                    <MapPin className="w-4 h-4 text-emerald-500" />
+                    {room.location}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Tiêu đề & Thông số cơ bản */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
