@@ -85,15 +85,28 @@ async function startServer() {
   // Get all rooms
   app.get("/api/rooms", (req, res) => {
     try {
-      const { search } = req.query;
-      let query = 'SELECT * FROM rooms ORDER BY created_at DESC';
+      const { search, location, guests } = req.query;
+      let query = 'SELECT * FROM rooms WHERE 1=1';
       let params: any[] = [];
 
       if (search && typeof search === 'string') {
-        query = 'SELECT * FROM rooms WHERE title LIKE ? OR location LIKE ? ORDER BY created_at DESC';
+        query += ' AND (title LIKE ? OR location LIKE ?)';
         const searchTerm = `%${search}%`;
-        params = [searchTerm, searchTerm];
+        params.push(searchTerm, searchTerm);
       }
+
+      if (location && typeof location === 'string') {
+        query += ' AND (title LIKE ? OR location LIKE ? OR address LIKE ?)';
+        const locTerm = `%${location}%`;
+        params.push(locTerm, locTerm, locTerm);
+      }
+
+      if (guests && typeof guests === 'string') {
+        query += ' AND max_guests >= ?';
+        params.push(Number(guests));
+      }
+
+      query += ' ORDER BY created_at DESC';
 
       const rooms = db.prepare(query).all(...params);
       res.json(rooms);
@@ -117,6 +130,33 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching room:", error);
       res.status(500).json({ error: "Failed to fetch room details" });
+    }
+  });
+
+  // Create a room (Admin)
+  app.post("/api/rooms", authenticateToken, (req: any, res: any) => {
+    try {
+      const { title, location, address, category, price_per_night, max_guests, bed_count, bath_count, description, image_url } = req.body;
+
+      if (!title || !location || !price_per_night) {
+        return res.status(400).json({ error: "Title, location, and price are required" });
+      }
+
+      const stmt = db.prepare(`
+        INSERT INTO rooms (title, location, address, category, price_per_night, max_guests, bed_count, bath_count, description, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const result = stmt.run(
+        title, location, address || '', category || 'Căn hộ', 
+        price_per_night, max_guests || 1, bed_count || 1, bath_count || 1, 
+        description || '', image_url || ''
+      );
+
+      res.status(201).json({ message: "Room created successfully", roomId: result.lastInsertRowid });
+    } catch (error) {
+      console.error("Error creating room:", error);
+      res.status(500).json({ error: "Failed to create room" });
     }
   });
 

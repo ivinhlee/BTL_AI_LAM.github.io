@@ -18,6 +18,8 @@ export default function Home() {
 
   // Search states
   const [searchLocation, setSearchLocation] = useState('');
+  const [searchCheckIn, setSearchCheckIn] = useState('');
+  const [searchCheckOut, setSearchCheckOut] = useState('');
   const [searchGuests, setSearchGuests] = useState('1');
 
   useEffect(() => {
@@ -102,6 +104,8 @@ export default function Home() {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchLocation) params.append('location', searchLocation);
+    if (searchCheckIn) params.append('checkin', searchCheckIn);
+    if (searchCheckOut) params.append('checkout', searchCheckOut);
     if (searchGuests) params.append('guests', searchGuests);
     
     navigate(`/rooms?${params.toString()}`);
@@ -132,79 +136,74 @@ export default function Home() {
           </p>
 
           {/* Floating Search Bar */}
-          <div className="bg-white p-2 rounded-2xl md:rounded-full shadow-2xl flex flex-col md:flex-row items-center gap-2 max-w-5xl mx-auto">
+          <div className="bg-white p-2 rounded-full shadow-2xl flex flex-col md:flex-row items-center gap-1 max-w-4xl mx-auto border border-slate-200">
             
             {/* Location Input */}
-            <div className="flex-1 w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-full cursor-text transition-colors">
-              <MapPin className="text-emerald-500 w-6 h-6 shrink-0" />
-              <div className="flex flex-col text-left w-full">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Địa điểm</span>
-                <input 
-                  type="text" 
-                  placeholder="Bạn muốn đi đâu?" 
-                  value={searchLocation}
-                  onChange={(e) => setSearchLocation(e.target.value)}
-                  className="bg-transparent border-none outline-none text-slate-600 text-sm w-full truncate placeholder:text-slate-400"
-                />
-              </div>
+            <div className="flex-1 w-full flex flex-col px-6 py-3 hover:bg-slate-100 rounded-full cursor-text transition-colors text-left group">
+              <span className="text-xs font-bold text-slate-800 tracking-wide">Địa điểm</span>
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm điểm đến" 
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+                className="bg-transparent border-none outline-none text-slate-600 text-sm w-full truncate placeholder:text-slate-400 group-hover:bg-slate-100 transition-colors"
+              />
             </div>
 
-            <div className="hidden md:block w-px h-10 bg-slate-200"></div>
+            <div className="hidden md:block w-px h-8 bg-slate-200"></div>
 
             {/* Start Date */}
-            <div className="flex-1 w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-full cursor-text transition-colors">
-              <Calendar className="text-emerald-500 w-6 h-6 shrink-0" />
-              <div className="flex flex-col text-left w-full">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Nhận phòng</span>
-                <input 
-                  type="date" 
-                  className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer"
-                />
-              </div>
+            <div className="flex-1 w-full flex flex-col px-6 py-3 hover:bg-slate-100 rounded-full cursor-pointer transition-colors text-left group">
+              <span className="text-xs font-bold text-slate-800 tracking-wide">Nhận phòng</span>
+              <input 
+                type="date" 
+                value={searchCheckIn}
+                onChange={(e) => setSearchCheckIn(e.target.value)}
+                className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer group-hover:bg-slate-100 transition-colors"
+              />
             </div>
 
-            <div className="hidden md:block w-px h-10 bg-slate-200"></div>
+            <div className="hidden md:block w-px h-8 bg-slate-200"></div>
 
             {/* End Date */}
-            <div className="flex-1 w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-full cursor-text transition-colors">
-              <Calendar className="text-emerald-500 w-6 h-6 shrink-0" />
-              <div className="flex flex-col text-left w-full">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Trả phòng</span>
-                <input 
-                  type="date" 
-                  className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer"
-                />
-              </div>
+            <div className="flex-1 w-full flex flex-col px-6 py-3 hover:bg-slate-100 rounded-full cursor-pointer transition-colors text-left group">
+              <span className="text-xs font-bold text-slate-800 tracking-wide">Trả phòng</span>
+              <input 
+                type="date" 
+                value={searchCheckOut}
+                onChange={(e) => setSearchCheckOut(e.target.value)}
+                className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer group-hover:bg-slate-100 transition-colors"
+              />
             </div>
 
-            <div className="hidden md:block w-px h-10 bg-slate-200"></div>
+            <div className="hidden md:block w-px h-8 bg-slate-200"></div>
 
-            {/* Guests */}
-            <div className="flex-1 w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 rounded-full cursor-text transition-colors">
-              <Users className="text-emerald-500 w-6 h-6 shrink-0" />
-              <div className="flex flex-col text-left w-full">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Số khách</span>
+            {/* Guests & Search Button */}
+            <div className="flex-1 w-full flex items-center justify-between pl-6 pr-2 py-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors group">
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-slate-800 tracking-wide">Khách</span>
                 <select 
                   value={searchGuests}
                   onChange={(e) => setSearchGuests(e.target.value)}
-                  className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer appearance-none"
+                  className="bg-transparent border-none outline-none text-slate-600 text-sm w-full cursor-pointer appearance-none group-hover:bg-slate-100 transition-colors"
                 >
-                  <option value="1">1 người</option>
-                  <option value="2">2 người</option>
-                  <option value="3">3 người</option>
-                  <option value="4">4+ người</option>
+                  <option value="1">1 khách</option>
+                  <option value="2">2 khách</option>
+                  <option value="3">3 khách</option>
+                  <option value="4">4+ khách</option>
+                  <option value="5">5+ khách</option>
+                  <option value="6">6+ khách</option>
                 </select>
               </div>
+              
+              {/* Search Button */}
+              <button 
+                onClick={handleSearch}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-full flex items-center justify-center transition-colors shadow-md hover:shadow-lg shrink-0"
+              >
+                <Search className="w-5 h-5" />
+              </button>
             </div>
-
-            {/* Search Button */}
-            <button 
-              onClick={handleSearch}
-              className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white p-4 md:px-8 md:py-4 rounded-xl md:rounded-full flex items-center justify-center gap-2 transition-colors font-bold shadow-md hover:shadow-lg shrink-0"
-            >
-              <Search className="w-5 h-5" />
-              <span className="md:hidden lg:inline">Tìm kiếm</span>
-            </button>
           </div>
         </div>
       </section>

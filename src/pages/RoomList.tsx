@@ -39,7 +39,11 @@ export default function RoomList() {
         setError(null);
         
         // Gọi API lấy danh sách phòng từ Backend
-        const response = await fetch('/api/rooms');
+        const params = new URLSearchParams();
+        if (initialLocation) params.append('location', initialLocation);
+        if (initialGuests) params.append('guests', initialGuests);
+
+        const response = await fetch(`/api/rooms?${params.toString()}`);
         
         if (!response.ok) {
           throw new Error('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
@@ -55,7 +59,7 @@ export default function RoomList() {
     };
 
     fetchRooms();
-  }, []);
+  }, [initialLocation, initialGuests]);
 
   useEffect(() => {
     const fetchWishlist = async () => {

@@ -12,6 +12,7 @@ import RoomDetail from './pages/RoomDetail';
 import Trips from './pages/Trips';
 import Wishlist from './pages/Wishlist';
 import Profile from './pages/Profile';
+import AdminAddRoom from './pages/AdminAddRoom';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/trips" element={<Trips />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/admin/add-room" element={<AdminAddRoom />} />
             </Routes>
           </main>
 

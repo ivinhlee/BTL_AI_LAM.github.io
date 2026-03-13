@@ -50,7 +50,7 @@ export default function Header() {
               <Home className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-slate-900 tracking-tight">
-              Viet<span className="text-emerald-500">Stay</span>
+              sea<span className="text-emerald-500">bnb</span>
             </span>
           </Link>
 
