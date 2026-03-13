@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Loader2, AlertCircle, Calendar, Users, CheckCircle, User, Mail, BedDouble, Bath, Home, Lock, Heart } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, Calendar, Users, CheckCircle, User, Mail, BedDouble, Bath, Home, Lock, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Room } from '../types';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
@@ -34,6 +34,7 @@ export default function RoomDetail() {
   const [showToast, setShowToast] = useState<boolean>(false);
 
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
 
   // Cập nhật thông tin khi user thay đổi
   useEffect(() => {
@@ -226,6 +227,18 @@ export default function RoomDetail() {
   }
 
   // 3. Trạng thái Success
+  const images = room.image_url
+    ? room.image_url.split(',').map((u: string) => u.trim()).filter(Boolean)
+    : [];
+  const totalImages = images.length;
+
+  const prevSlide = () => {
+    if (totalImages > 0) setCurrentSlide((prev) => (prev - 1 + totalImages) % totalImages);
+  };
+  const nextSlide = () => {
+    if (totalImages > 0) setCurrentSlide((prev) => (prev + 1) % totalImages);
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen py-8 md:py-12 relative">
       
@@ -247,18 +260,82 @@ export default function RoomDetail() {
           
           {/* Cột Trái: Thông tin chi tiết (70% trên Desktop) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Ảnh Bìa */}
-            <div className="rounded-3xl overflow-hidden aspect-video relative shadow-sm">
-              <img 
-                src={room.image_url} 
-                alt={room.title} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            {/* Ảnh Bìa - Slider */}
+            <div className="rounded-3xl overflow-hidden aspect-video relative shadow-sm bg-slate-900 group">
+              {/* Slides */}
+              {images.length > 0 ? (
+                <img
+                  key={images[currentSlide]}
+                  src={images[currentSlide]}
+                  alt={`${room.title} - ảnh ${currentSlide + 1}`}
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://placehold.co/800x400?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh';
+                  }}
+                />
+              ) : (
+                <img
+                  src={room.image_url}
+                  alt={room.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://placehold.co/800x400?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh';
+                  }}
+                />
+              )}
+
+              {/* Location Badge */}
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-bold text-slate-800 shadow-sm">
                 <MapPin className="w-4 h-4 text-emerald-500" />
                 {room.location}
               </div>
+
+              {/* Navigation Arrows & Index (only when multiple images) */}
+              {totalImages > 1 && (
+                <>
+                  {/* Left Arrow */}
+                  <button
+                    type="button"
+                    onClick={prevSlide}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                    aria-label="Ảnh trước"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  {/* Right Arrow */}
+                  <button
+                    type="button"
+                    onClick={nextSlide}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                    aria-label="Ảnh tiếp theo"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  {/* Slide Index */}
+                  <div className="absolute bottom-4 right-4 bg-black/50 text-white text-sm font-bold px-3 py-1.5 rounded-full backdrop-blur-sm">
+                    {currentSlide + 1}/{totalImages}
+                  </div>
+
+                  {/* Dot Indicators */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCurrentSlide(i)}
+                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                          i === currentSlide ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'
+                        }`}
+                        aria-label={`Chuyển đến ảnh ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Tiêu đề & Thông số cơ bản */}

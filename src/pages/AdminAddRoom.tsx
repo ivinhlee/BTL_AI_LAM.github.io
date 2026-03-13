@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2 } from 'lucide-react';
+import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+
+const MAX_IMAGES = 20;
 
 export default function AdminAddRoom() {
   const navigate = useNavigate();
@@ -18,18 +20,47 @@ export default function AdminAddRoom() {
     max_guests: '',
     bed_count: '',
     bath_count: '',
-    description: '',
-    image_url: ''
+    description: ''
   });
+
+  const [imageUrls, setImageUrls] = useState<string[]>(['']);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleImageUrlChange = (index: number, value: string) => {
+    const updated = [...imageUrls];
+    updated[index] = value;
+    setImageUrls(updated);
+  };
+
+  const addImageUrl = () => {
+    if (imageUrls.length < MAX_IMAGES) {
+      setImageUrls([...imageUrls, '']);
+    }
+  };
+
+  const removeImageUrl = (index: number) => {
+    if (imageUrls.length === 1) {
+      setImageUrls(['']);
+    } else {
+      setImageUrls(imageUrls.filter((_, i) => i !== index));
+    }
+  };
+
+  const validImageCount = imageUrls.filter(u => u.trim()).length;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
       toast.error('Vui lòng đăng nhập với quyền Admin!');
+      return;
+    }
+
+    const validUrls = imageUrls.map(u => u.trim()).filter(Boolean);
+    if (validUrls.length === 0) {
+      toast.error('Vui lòng nhập ít nhất một URL ảnh!');
       return;
     }
 
@@ -47,7 +78,8 @@ export default function AdminAddRoom() {
           price_per_night: Number(formData.price_per_night),
           max_guests: Number(formData.max_guests),
           bed_count: Number(formData.bed_count),
-          bath_count: Number(formData.bath_count)
+          bath_count: Number(formData.bath_count),
+          image_url: validUrls.join(',')
         })
       });
 
@@ -242,39 +274,64 @@ export default function AdminAddRoom() {
 
           {/* Hình ảnh */}
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Hình ảnh</h2>
-            
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">URL Ảnh *</label>
-              <div className="relative mb-6">
-                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="url"
-                  name="image_url"
-                  required
-                  value={formData.image_url}
-                  onChange={handleChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                />
-              </div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-900">Hình ảnh</h2>
+              <span className="text-sm text-slate-400">{validImageCount}/{MAX_IMAGES} ảnh</span>
+            </div>
 
-              {/* Image Preview */}
-              {formData.image_url && (
-                <div className="mt-4">
-                  <p className="text-sm font-bold text-slate-700 mb-2">Xem trước ảnh:</p>
-                  <div className="relative aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                    <img
-                      src={formData.image_url}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://placehold.co/800x400?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh';
-                      }}
-                      referrerPolicy="no-referrer"
-                    />
+            <div className="space-y-4">
+              {imageUrls.map((url, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => handleImageUrlChange(index, e.target.value)}
+                        placeholder={`https://example.com/image-${index + 1}.jpg`}
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImageUrl(index)}
+                      className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                      title="Xóa ảnh này"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
+
+                  {/* Image Preview */}
+                  {url.trim() && (
+                    <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-100 border border-slate-200 ml-0">
+                      <img
+                        src={url.trim()}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/800x400?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh';
+                        }}
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                        {index + 1}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              ))}
+
+              {imageUrls.length < MAX_IMAGES && (
+                <button
+                  type="button"
+                  onClick={addImageUrl}
+                  className="w-full py-3 border-2 border-dashed border-slate-300 hover:border-emerald-400 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 rounded-xl flex items-center justify-center gap-2 transition-all font-medium"
+                >
+                  <Plus className="w-5 h-5" />
+                  Thêm ảnh ({validImageCount}/{MAX_IMAGES})
+                </button>
               )}
             </div>
           </div>
