@@ -130,8 +130,8 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
   };
 
   const datePopoverClass = isHero
-    ? 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 z-50'
-    : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 z-50';
+    ? 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50'
+    : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50';
 
   const Counter = ({
     label,
@@ -184,7 +184,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="absolute left-0 top-full mt-3 w-[min(44rem,92vw)] rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 z-50"
+          className="absolute left-0 top-full mt-3 w-[min(44rem,92vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50"
         >
           <div className="mb-5">
             <p className="text-sm font-semibold text-slate-900 mb-3">Những tìm kiếm gần đây</p>
@@ -253,7 +253,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
               onChange={(item: RangeKeyDict) => setDateRange([item.selection as typeof dateRange[number]])}
               months={2}
               direction="horizontal"
-              rangeColors={['#ff385c']}
+              rangeColors={['#34C759']}
               minDate={new Date()}
               showMonthAndYearPickers={false}
             />
@@ -269,7 +269,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
         transition={{ duration: 0.2 }}
-        className="absolute right-0 top-full mt-3 w-[min(26rem,92vw)] rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 z-50"
+        className="absolute right-0 top-full mt-3 w-[min(26rem,92vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50"
       >
         <Counter label="Người lớn" subLabel="Trên 13 tuổi" field="adults" />
         <Counter label="Trẻ em" subLabel="Dưới 13 tuổi" field="children" />
@@ -284,7 +284,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
       <motion.div
         layout
         transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-        className={`w-full rounded-full border border-white/50 bg-white/70 backdrop-blur-md shadow-[0_10px_35px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] ${
+        className={`w-full rounded-full border border-white/40 bg-white/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.7)] ${
           isHero ? 'p-1.5' : 'p-1'
         }`}
       >
@@ -357,7 +357,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           <button
             type="button"
             onClick={() => triggerSearch()}
-            className="h-[48px] rounded-full bg-[#FF385C] hover:bg-[#e53156] px-4 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+            className="h-[48px] rounded-full bg-[#34C759] hover:bg-[#2eaa4e] hover:shadow-[0_0_20px_rgba(52,199,89,0.4)] px-4 text-white font-semibold transition-all flex items-center justify-center gap-2"
           >
             <Search className="w-5 h-5" />
             <AnimatePresence>
