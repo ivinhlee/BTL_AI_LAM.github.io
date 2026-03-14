@@ -142,7 +142,7 @@ export default function LoginSignupPage() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -20, opacity: 0 }}
               >
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Chào mừng bạn đến với seabnb</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Chào mừng bạn đến với spotbnb</h2>
                 <form onSubmit={handleNextStep} className="space-y-4">
                   <div className="border border-gray-400 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-black">
                     <div className="relative border-b border-gray-400 px-3 py-2">
@@ -184,7 +184,7 @@ export default function LoginSignupPage() {
                 </div>
 
                 <p className="mt-4 text-center text-sm text-gray-600">
-                  Hoặc đăng nhập bằng <span onClick={() => setIsLoginMode(true)} className="font-bold underline cursor-pointer text-rose-600">Email</span>
+                  Hoặc đăng nhập bằng <span onClick={() => setIsLoginMode(true)} className="font-bold underline cursor-pointer text-emerald-600">Email</span>
                 </p>
               </motion.div>
             ) : (
@@ -225,7 +225,7 @@ export default function LoginSignupPage() {
                   </div>
 
                   <p className="text-[11px] text-gray-500 leading-tight">
-                    Bằng cách chọn <strong>Chấp nhận và tiếp tục</strong>, tôi đồng ý với các Điều khoản dịch vụ và Chính sách bảo mật của seabnb.
+                    Bằng cách chọn <strong>Chấp nhận và tiếp tục</strong>, tôi đồng ý với các Điều khoản dịch vụ và Chính sách bảo mật của spotbnb.
                   </p>
 
                   <button type="submit" className="w-full py-3.5 rounded-xl text-white font-bold text-base bg-black hover:bg-gray-900 transition-all">

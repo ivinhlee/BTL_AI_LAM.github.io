@@ -1,9 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2, Plus, Trash2, ShieldCheck, XCircle, RefreshCw, ListChecks, Search } from 'lucide-react';
+import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2, Plus, Trash2, ShieldCheck, XCircle, RefreshCw, ListChecks, Search, CheckSquare, Globe, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Room } from '../types';
+
+const AMENITIES_LIST = [
+  'Wifi', 'Bể bơi', 'Bếp', 'Điều hòa', 'Máy giặt', 'TV', 'Chỗ đỗ xe', 'Lò sưởi', 'Bồn tắm nước nóng', 'Sân trong hoặc ban công', 'Sân sau', 'Lò nướng BBQ', 'Bàn làm việc', 'Máy sấy tóc', 'Bàn ủi'
+];
+
+const BOOKING_OPTIONS_LIST = [
+  'Tự nhận phòng', 'Hủy miễn phí', 'Cho phép mang theo thú cưng'
+];
+
+const HOST_LANGUAGES_LIST = [
+  'Tiếng Anh', 'Tiếng Việt', 'Tiếng Pháp', 'Tiếng Tây Ban Nha', 'Tiếng Trung', 'Tiếng Nhật', 'Tiếng Hàn'
+];
 
 interface BookingRow {
   booking_id: number;
@@ -29,7 +41,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'add' | 'bookings'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'bookings'>('bookings');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
@@ -50,6 +62,10 @@ export default function AdminDashboard() {
     description: ''
   });
   const [imageUrls, setImageUrls] = useState<string[]>(['']);
+
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [selectedBookingOptions, setSelectedBookingOptions] = useState<string[]>([]);
+  const [selectedHostLanguages, setSelectedHostLanguages] = useState<string[]>([]);
 
   const normalizeImageInput = (value: string) => {
     return value
@@ -109,6 +125,14 @@ export default function AdminDashboard() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const toggleSelection = (item: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>) => {
+    if (list.includes(item)) {
+      setList(list.filter(i => i !== item));
+    } else {
+      setList([...list, item]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
@@ -137,7 +161,10 @@ export default function AdminDashboard() {
           max_guests: Number(formData.max_guests),
           bed_count: Number(formData.bed_count),
           bath_count: Number(formData.bath_count),
-          image_url: cleanedImageUrls.join(',')
+          image_url: cleanedImageUrls.join(','),
+          amenities: selectedAmenities,
+          booking_options: selectedBookingOptions,
+          host_languages: selectedHostLanguages
         })
       });
 
@@ -149,6 +176,9 @@ export default function AdminDashboard() {
       toast.success('Thêm phòng thành công!');
       setFormData({ title: '', address: '', location: '', category: 'Căn hộ', price_per_night: '', max_guests: '', bed_count: '', bath_count: '', description: '' });
       setImageUrls(['']);
+      setSelectedAmenities([]);
+      setSelectedBookingOptions([]);
+      setSelectedHostLanguages([]);
       // refresh rooms list to include new room
       const res = await fetch('/api/rooms');
       const data = await res.json();
@@ -220,7 +250,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-2">
-          <XCircle className="w-12 h-12 text-rose-500 mx-auto" />
+          <XCircle className="w-12 h-12 text-emerald-500 mx-auto" />
           <p className="text-lg font-semibold text-slate-900">Chỉ dành cho Admin</p>
           <p className="text-slate-500">Tài khoản của bạn không có quyền truy cập trang này.</p>
         </div>
@@ -234,7 +264,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <p className="text-sm text-slate-500 uppercase tracking-wide">Bảng điều khiển</p>
-            <h1 className="text-3xl font-bold text-slate-900">Admin / seabnb</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Admin / Spotbnb</h1>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -244,12 +274,11 @@ export default function AdminDashboard() {
 
         <div className="flex gap-3 mb-6">
           <button
-            onClick={() => setActiveTab('add')}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border ${
-              activeTab === 'add' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-700 border-slate-200'
-            }`}
+            type="button"
+            onClick={() => navigate('/admin/add-room')}
+            className="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
           >
-            <Home className="w-4 h-4" /> Thêm phòng
+            <Plus className="w-4 h-4" /> Đi tới thêm phòng
           </button>
           <button
             onClick={() => setActiveTab('bookings')}
@@ -258,6 +287,13 @@ export default function AdminDashboard() {
             }`}
           >
             <ListChecks className="w-4 h-4" /> Tất cả đặt phòng
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/reviews')}
+            className="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+          >
+            <Star className="w-4 h-4" /> Thêm đánh giá
           </button>
         </div>
 
@@ -426,6 +462,73 @@ export default function AdminDashboard() {
             </div>
 
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Tiện ích & Tùy chọn</h2>
+
+              {/* Tiện nghi */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckSquare className="w-5 h-5 text-slate-700" />
+                  <h3 className="text-md font-bold text-slate-800">Tiện nghi nổi bật</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {AMENITIES_LIST.map((amenity) => (
+                    <label key={amenity} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                        checked={selectedAmenities.includes(amenity)}
+                        onChange={() => toggleSelection(amenity, selectedAmenities, setSelectedAmenities)}
+                      />
+                      <span className="text-sm text-slate-700">{amenity}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tùy chọn đặt phòng */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <ShieldCheck className="w-5 h-5 text-slate-700" />
+                  <h3 className="text-md font-bold text-slate-800">Tùy chọn đặt phòng</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {BOOKING_OPTIONS_LIST.map((option) => (
+                    <label key={option} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                        checked={selectedBookingOptions.includes(option)}
+                        onChange={() => toggleSelection(option, selectedBookingOptions, setSelectedBookingOptions)}
+                      />
+                      <span className="text-sm text-slate-700">{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ngôn ngữ chủ nhà */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-5 h-5 text-slate-700" />
+                  <h3 className="text-md font-bold text-slate-800">Ngôn ngữ chủ nhà</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {HOST_LANGUAGES_LIST.map((lang) => (
+                    <label key={lang} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                        checked={selectedHostLanguages.includes(lang)}
+                        onChange={() => toggleSelection(lang, selectedHostLanguages, setSelectedHostLanguages)}
+                      />
+                      <span className="text-sm text-slate-700">{lang}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
               <h2 className="text-xl font-bold text-slate-900 mb-6">Hình ảnh</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
@@ -561,7 +664,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={clearAllBookings}
                     disabled={clearing}
-                    className="px-3 py-2 text-sm rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-2"
+                    className="px-3 py-2 text-sm rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" /> Xóa tất cả booking
                   </button>

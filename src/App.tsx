@@ -14,10 +14,12 @@ import Wishlist from './pages/Wishlist';
 import Profile from './pages/Profile';
 import AdminAddRoom from './pages/AdminAddRoom';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminManageReviews from './pages/AdminManageReviews';
 import LoginSignupPage from './pages/LoginSignupPage';
 import Checkout from './pages/Checkout';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Placeholder Components
 const Promotions = () => (
@@ -32,12 +34,13 @@ const Promotions = () => (
 function AppContent() {
   const location = useLocation();
   const hideChrome = location.pathname === '/login';
+  const isRoomDetailPage = /^\/rooms\/[^/]+$/.test(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-50">
       {!hideChrome && <Header />}
 
-      <main className="flex-grow pt-24 md:pt-28">
+      <main className={`flex-grow ${isRoomDetailPage ? 'pt-0' : 'pt-24 md:pt-28'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/rooms" element={<RoomList />} />
@@ -46,8 +49,30 @@ function AppContent() {
           <Route path="/trips" element={<Trips />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/add-room" element={<AdminAddRoom />} />
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/admin/add-room"
+            element={(
+              <ProtectedRoute adminOnly>
+                <AdminAddRoom />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/admin/reviews"
+            element={(
+              <ProtectedRoute adminOnly>
+                <AdminManageReviews />
+              </ProtectedRoute>
+            )}
+          />
           <Route path="/login" element={<LoginSignupPage />} />
           <Route path="/checkout" element={<Checkout />} />
         </Routes>

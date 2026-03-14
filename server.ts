@@ -1,11 +1,69 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import net from "node:net";
 import db from "./src/db/database.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
+
+async function findAvailablePort(preferredPort: number, host = "0.0.0.0", maxAttempts = 50) {
+  let candidate = preferredPort;
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    // Probe by trying to bind a temporary server to the candidate port.
+    const isAvailable = await new Promise<boolean>((resolve) => {
+      const tester = net.createServer();
+
+      tester.once("error", () => {
+        resolve(false);
+      });
+
+      tester.once("listening", () => {
+        tester.close(() => resolve(true));
+      });
+
+      tester.listen(candidate, host);
+    });
+
+    if (isAvailable) {
+      return candidate;
+    }
+
+    candidate += 1;
+  }
+
+  throw new Error(`Không tìm được cổng trống từ ${preferredPort} sau ${maxAttempts} lần thử`);
+}
+
+function parseStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  const input = value.trim();
+  if (!input) {
+    return [];
+  }
+
+  if (input.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // Fall back to CSV parser below.
+    }
+  }
+
+  return input.split(",").map((item) => item.trim()).filter(Boolean);
+}
 
 // Ensure DB has the latest columns (idempotent migrations)
 function runMigrations() {
@@ -54,27 +112,61 @@ function runMigrations() {
   try {
     db.prepare('ALTER TABLE rooms ADD COLUMN room_type TEXT').run();
   } catch (err) {}
+
+  // Reviews table for detailed 6-criteria ratings
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      room_id INTEGER NOT NULL,
+      user_name TEXT NOT NULL,
+      avatar_url TEXT,
+      comment TEXT,
+      cleanliness REAL NOT NULL,
+      accuracy REAL NOT NULL,
+      check_in REAL NOT NULL,
+      communication REAL NOT NULL,
+      location REAL NOT NULL,
+      value REAL NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (room_id) REFERENCES rooms(id)
+    )
+  `).run();
 }
 
 async function ensureAdminUser() {
-  const existing = db.prepare('SELECT id FROM users WHERE is_admin = 1').get();
-  if (existing) return;
-
-  const email = 'admin@seabnb.local';
+  const canonicalEmail = 'admin@spotbnb.local';
+  const legacyEmail = 'admin@seabnb.local';
   const password = 'Admin@123';
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const fullName = 'Seabnb Admin';
+  const fullName = 'Spotbnb Admin';
+
+  const canonical = db.prepare('SELECT id FROM users WHERE email = ?').get(canonicalEmail);
+  const legacy = db.prepare('SELECT id FROM users WHERE email = ?').get(legacyEmail) as { id: number } | undefined;
+
+  if (!canonical && legacy) {
+    db.prepare('UPDATE users SET email = ?, is_admin = 1 WHERE id = ?').run(canonicalEmail, legacy.id);
+    console.log('Migrated legacy admin email to canonical:', canonicalEmail);
+    return;
+  }
 
   const stmt = db.prepare('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 1)');
-  stmt.run(fullName, email, hashedPassword);
-  console.log('Seeded default admin user:', email, 'password:', password, '(đổi mật khẩu sau khi đăng nhập)');
+  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(canonicalEmail);
+  if (existing) return;
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  stmt.run(fullName, canonicalEmail, hashedPassword);
+  console.log('Seeded default admin user:', canonicalEmail, 'password:', password, '(đổi mật khẩu sau khi đăng nhập)');
 }
 
 async function startServer() {
   runMigrations();
   await ensureAdminUser();
   const app = express();
-  const PORT = 3000;
+  const preferredPort = Number(process.env.PORT || 3000);
+  const PORT = await findAvailablePort(preferredPort);
+
+  if (PORT !== preferredPort) {
+    console.warn(`Port ${preferredPort} đang bận, chuyển sang ${PORT}`);
+  }
 
   app.use(express.json());
 
@@ -191,17 +283,13 @@ async function startServer() {
       query += ' ORDER BY created_at DESC';
 
       const rooms = db.prepare(query).all(...params).map((room: any) => {
-        try {
-          return {
-            ...room,
-            amenities: room.amenities ? JSON.parse(room.amenities) : [],
-            booking_options: room.booking_options ? JSON.parse(room.booking_options) : [],
-            accessibility: room.accessibility ? JSON.parse(room.accessibility) : [],
-            host_languages: room.host_languages ? JSON.parse(room.host_languages) : [],
-          };
-        } catch (e) {
-          return room; // fallback if JSON.parse fails
-        }
+        return {
+          ...room,
+          amenities: parseStringList(room.amenities),
+          booking_options: parseStringList(room.booking_options),
+          accessibility: parseStringList(room.accessibility),
+          host_languages: parseStringList(room.host_languages),
+        };
       });
       res.json(rooms);
     } catch (error) {
@@ -294,14 +382,47 @@ async function startServer() {
         return res.status(404).json({ error: "Room not found" });
       }
       
-      try {
-        room.amenities = room.amenities ? JSON.parse(room.amenities) : [];
-        room.booking_options = room.booking_options ? JSON.parse(room.booking_options) : [];
-        room.accessibility = room.accessibility ? JSON.parse(room.accessibility) : [];
-        room.host_languages = room.host_languages ? JSON.parse(room.host_languages) : [];
-      } catch (e) {
-        // ignore parse error
-      }
+      room.amenities = parseStringList(room.amenities);
+      room.booking_options = parseStringList(room.booking_options);
+      room.accessibility = parseStringList(room.accessibility);
+      room.host_languages = parseStringList(room.host_languages);
+
+      const reviewStats = db.prepare(`
+        SELECT
+          COUNT(*) AS review_count,
+          AVG(cleanliness) AS cleanliness,
+          AVG(accuracy) AS accuracy,
+          AVG(check_in) AS check_in,
+          AVG(communication) AS communication,
+          AVG(location) AS location,
+          AVG(value) AS value
+        FROM reviews
+        WHERE room_id = ?
+      `).get(id) as any;
+
+      const normalizedStats = {
+        review_count: reviewStats?.review_count || 0,
+        cleanliness: reviewStats?.cleanliness ?? null,
+        accuracy: reviewStats?.accuracy ?? null,
+        check_in: reviewStats?.check_in ?? null,
+        communication: reviewStats?.communication ?? null,
+        location: reviewStats?.location ?? null,
+        value: reviewStats?.value ?? null,
+      };
+
+      const criteria = [
+        normalizedStats.cleanliness,
+        normalizedStats.accuracy,
+        normalizedStats.check_in,
+        normalizedStats.communication,
+        normalizedStats.location,
+        normalizedStats.value,
+      ].filter((score) => typeof score === 'number') as number[];
+
+      room.review_stats = normalizedStats;
+      room.rating_average = criteria.length
+        ? criteria.reduce((sum, score) => sum + score, 0) / criteria.length
+        : null;
       
       res.json(room);
     } catch (error) {
@@ -310,8 +431,114 @@ async function startServer() {
     }
   });
 
+  // Get all reviews by room ID
+  app.get("/api/rooms/:id/reviews", (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const reviews = db.prepare(`
+        SELECT
+          id,
+          room_id,
+          user_name,
+          avatar_url,
+          comment,
+          cleanliness,
+          accuracy,
+          check_in,
+          communication,
+          location,
+          value,
+          created_at
+        FROM reviews
+        WHERE room_id = ?
+        ORDER BY datetime(created_at) DESC
+      `).all(id);
+
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching room reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  // Admin: seed review sample data
+  app.post("/api/admin/reviews", authenticateToken, requireAdmin, (req: any, res: any) => {
+    try {
+      const {
+        room_id,
+        user_name,
+        avatar_url,
+        comment,
+        cleanliness,
+        accuracy,
+        check_in,
+        communication,
+        location,
+        value,
+      } = req.body;
+
+      if (!room_id || !user_name) {
+        return res.status(400).json({ error: "room_id và user_name là bắt buộc" });
+      }
+
+      const scores = {
+        cleanliness: Number(cleanliness),
+        accuracy: Number(accuracy),
+        check_in: Number(check_in),
+        communication: Number(communication),
+        location: Number(location),
+        value: Number(value),
+      };
+
+      const invalidScore = Object.values(scores).some((score) => Number.isNaN(score) || score < 0 || score > 5);
+      if (invalidScore) {
+        return res.status(400).json({ error: "Điểm từng tiêu chí phải là số trong khoảng 0 đến 5" });
+      }
+
+      const room = db.prepare('SELECT id FROM rooms WHERE id = ?').get(room_id);
+      if (!room) {
+        return res.status(404).json({ error: "Room not found" });
+      }
+
+      const stmt = db.prepare(`
+        INSERT INTO reviews (
+          room_id,
+          user_name,
+          avatar_url,
+          comment,
+          cleanliness,
+          accuracy,
+          check_in,
+          communication,
+          location,
+          value
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const result = stmt.run(
+        room_id,
+        String(user_name).trim(),
+        avatar_url || null,
+        comment || null,
+        scores.cleanliness,
+        scores.accuracy,
+        scores.check_in,
+        scores.communication,
+        scores.location,
+        scores.value,
+      );
+
+      res.status(201).json({ message: "Review created", reviewId: result.lastInsertRowid });
+    } catch (error) {
+      console.error("Error creating admin review:", error);
+      res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
   // Create a room (Admin)
-  app.post("/api/rooms", authenticateToken, (req: any, res: any) => {
+  app.post("/api/rooms", authenticateToken, requireAdmin, (req: any, res: any) => {
     try {
       const { 
         title, location, address, category, price_per_night, 
@@ -323,7 +550,8 @@ async function startServer() {
         return res.status(400).json({ error: "Title, location, and price are required" });
       }
 
-      const safeAmenities = amenities ? (typeof amenities === 'string' ? amenities : JSON.stringify(amenities)) : null;
+      const safeAmenitiesList = parseStringList(amenities);
+      const safeAmenities = safeAmenitiesList.length ? JSON.stringify(safeAmenitiesList) : null;
       const safeBookingOptions = booking_options ? (typeof booking_options === 'string' ? booking_options : JSON.stringify(booking_options)) : null;
       const safeAccessibility = accessibility ? (typeof accessibility === 'string' ? accessibility : JSON.stringify(accessibility)) : null;
       const safeHostLanguages = host_languages ? (typeof host_languages === 'string' ? host_languages : JSON.stringify(host_languages)) : null;
@@ -371,6 +599,15 @@ async function startServer() {
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return res.status(400).json({ error: "Ngày nhận/trả phòng không hợp lệ" });
       }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startDay = new Date(start);
+      startDay.setHours(0, 0, 0, 0);
+      if (startDay < today) {
+        return res.status(400).json({ error: "Không thể đặt phòng cho ngày trong quá khứ" });
+      }
+
       if (end <= start) {
         return res.status(400).json({ error: "Check-out date must be after check-in date" });
       }
@@ -419,6 +656,15 @@ async function startServer() {
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return res.status(400).json({ error: "Ngày nhận/trả phòng không hợp lệ" });
       }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startDay = new Date(start);
+      startDay.setHours(0, 0, 0, 0);
+      if (startDay < today) {
+        return res.status(400).json({ error: "Không thể đặt phòng cho ngày trong quá khứ" });
+      }
+
       if (end <= start) {
         return res.status(400).json({ error: "Check-out date must be after check-in date" });
       }
@@ -595,8 +841,12 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    process.env.DISABLE_HMR = "true";
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);

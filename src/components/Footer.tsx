@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <MapPin className="w-6 h-6 text-emerald-500" />
-              seabnb
+              spotbnb
             </h3>
             <p className="text-sm leading-relaxed mb-4">
               Chúng tôi mang đến những trải nghiệm lưu trú tuyệt vời nhất, giúp bạn khám phá vẻ đẹp của Việt Nam và thế giới với dịch vụ chuyên nghiệp và tận tâm.
@@ -61,14 +61,14 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span>ivinhlee@seabnb.com</span>
+                <span>ivinhlee@spotbnb.com</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-slate-800 mt-10 pt-6 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} seabnb. Tất cả quyền được bảo lưu.</p>
+          <p>&copy; {new Date().getFullYear()} spotbnb. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

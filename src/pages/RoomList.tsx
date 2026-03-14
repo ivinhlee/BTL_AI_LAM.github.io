@@ -1,33 +1,64 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapPin, Users, BedDouble, Bath, AlertCircle, Search, Filter, SlidersHorizontal, Heart, X, CheckSquare, ShieldCheck, Globe, Wifi, Waves, ChefHat, Wind, WashingMachine, Tv, Car, Flame, Bath as BathIcon, Sun, TreePine, UtensilsCrossed, Monitor, Scissors, Shirt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Slider from 'rc-slider';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Room } from '../types';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { RoomSkeleton } from '../components/RoomSkeleton.tsx';
+import { PriceHistogram } from '../components/PriceHistogram.tsx';
 import 'rc-slider/assets/index.css';
 
-const Range = (Slider as any).Range || (() => null);
-
 const AMENITIES_LIST = [
-  { name: 'Wifi', icon: Wifi },
-  { name: 'Bể bơi', icon: Waves },
-  { name: 'Bếp', icon: ChefHat },
-  { name: 'Điều hòa', icon: Wind },
-  { name: 'Máy giặt', icon: WashingMachine },
-  { name: 'TV', icon: Tv },
-  { name: 'Chỗ đỗ xe', icon: Car },
-  { name: 'Lò sưởi', icon: Flame },
-  { name: 'Bồn tắm nước nóng', icon: BathIcon },
-  { name: 'Sân trong hoặc ban công', icon: Sun },
-  { name: 'Sân sau', icon: TreePine },
-  { name: 'Lò nướng BBQ', icon: UtensilsCrossed },
-  { name: 'Bàn làm việc', icon: Monitor },
-  { name: 'Máy sấy tóc', icon: Scissors },
-  { name: 'Bàn ủi', icon: Shirt }
+  { key: 'wifi', name: 'Wifi', icon: Wifi },
+  { key: 'pool', name: 'Bể bơi', icon: Waves },
+  { key: 'kitchen', name: 'Bếp', icon: ChefHat },
+  { key: 'air_conditioning', name: 'Điều hòa', icon: Wind },
+  { key: 'washer', name: 'Máy giặt', icon: WashingMachine },
+  { key: 'tv', name: 'TV', icon: Tv },
+  { key: 'parking', name: 'Chỗ đỗ xe', icon: Car },
+  { key: 'fireplace', name: 'Lò sưởi', icon: Flame },
+  { key: 'hot_tub', name: 'Bồn tắm nước nóng', icon: BathIcon },
+  { key: 'balcony', name: 'Sân trong hoặc ban công', icon: Sun },
+  { key: 'backyard', name: 'Sân sau', icon: TreePine },
+  { key: 'bbq', name: 'Lò nướng BBQ', icon: UtensilsCrossed },
+  { key: 'workspace', name: 'Bàn làm việc', icon: Monitor },
+  { key: 'hair_dryer', name: 'Máy sấy tóc', icon: Scissors },
+  { key: 'iron', name: 'Bàn ủi', icon: Shirt }
 ];
+
+const AMENITY_ALIASES: Record<string, string> = {
+  wifi: 'wifi',
+  Wifi: 'wifi',
+  pool: 'pool',
+  'Bể bơi': 'pool',
+  kitchen: 'kitchen',
+  'Bếp': 'kitchen',
+  air_conditioning: 'air_conditioning',
+  'Điều hòa': 'air_conditioning',
+  washer: 'washer',
+  'Máy giặt': 'washer',
+  tv: 'tv',
+  TV: 'tv',
+  parking: 'parking',
+  'Chỗ đỗ xe': 'parking',
+  fireplace: 'fireplace',
+  'Lò sưởi': 'fireplace',
+  hot_tub: 'hot_tub',
+  'Bồn tắm nước nóng': 'hot_tub',
+  balcony: 'balcony',
+  'Sân trong hoặc ban công': 'balcony',
+  backyard: 'backyard',
+  'Sân sau': 'backyard',
+  bbq: 'bbq',
+  'Lò nướng BBQ': 'bbq',
+  workspace: 'workspace',
+  'Bàn làm việc': 'workspace',
+  hair_dryer: 'hair_dryer',
+  'Máy sấy tóc': 'hair_dryer',
+  iron: 'iron',
+  'Bàn ủi': 'iron',
+};
 
 const BOOKING_OPTIONS_LIST = [
   'Tự nhận phòng', 'Hủy miễn phí', 'Cho phép mang theo thú cưng'
@@ -40,6 +71,41 @@ const HOST_LANGUAGES_LIST = [
 // Hàm format tiền tệ VNĐ
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+};
+
+const parseListField = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value !== 'string') {
+    return [];
+  }
+
+  const input = value.trim();
+  if (!input) return [];
+
+  if (input.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
+      }
+    } catch {
+      // fall through to CSV parser
+    }
+  }
+
+  return input.split(',').map((item) => item.trim()).filter(Boolean);
+};
+
+const normalizeAmenityKey = (value: string): string => {
+  const trimmed = value.trim();
+  return AMENITY_ALIASES[trimmed] || trimmed.toLowerCase();
+};
+
+const parseAmenityField = (value: unknown): string[] => {
+  return parseListField(value).map(normalizeAmenityKey);
 };
 
 export default function RoomList() {
@@ -182,28 +248,16 @@ export default function RoomList() {
       const matchBaths = tempFilters.minBaths === '' || room.bath_count >= Number(tempFilters.minBaths);
       
       const matchAmenities = tempFilters.amenities.every(a => {
-        try {
-          const roomAmenities = Array.isArray(room.amenities) ? room.amenities : JSON.parse(room.amenities as unknown as string || '[]');
-          return roomAmenities.includes(a);
-        } catch (e) {
-          return false;
-        }
+        const roomAmenities = parseAmenityField((room as any).amenities);
+        return roomAmenities.includes(a);
       });
       const matchBookingOptions = tempFilters.bookingOptions.every(o => {
-        try {
-          const roomOptions = Array.isArray(room.booking_options) ? room.booking_options : JSON.parse(room.booking_options as unknown as string || '[]');
-          return roomOptions.includes(o);
-        } catch (e) {
-          return false;
-        }
+        const roomOptions = parseListField((room as any).booking_options);
+        return roomOptions.includes(o);
       });
       const matchHostLanguages = tempFilters.hostLanguages.every(l => {
-        try {
-          const roomLangs = Array.isArray(room.host_languages) ? room.host_languages : JSON.parse(room.host_languages as unknown as string || '[]');
-          return roomLangs.includes(l);
-        } catch (e) {
-          return false;
-        }
+        const roomLangs = parseListField((room as any).host_languages);
+        return roomLangs.includes(l);
       });
 
       return matchSearch && matchMinPrice && matchMaxPrice && matchRoomType && matchGuests && matchBeds && matchBaths && matchAmenities && matchBookingOptions && matchHostLanguages;
@@ -231,28 +285,16 @@ export default function RoomList() {
       const matchBaths = activeFilters.minBaths === '' || room.bath_count >= Number(activeFilters.minBaths);
       
       const matchAmenities = activeFilters.amenities.every(a => {
-        try {
-          const roomAmenities = Array.isArray(room.amenities) ? room.amenities : JSON.parse(room.amenities as unknown as string || '[]');
-          return roomAmenities.includes(a);
-        } catch (e) {
-          return false;
-        }
+        const roomAmenities = parseAmenityField((room as any).amenities);
+        return roomAmenities.includes(a);
       });
       const matchBookingOptions = activeFilters.bookingOptions.every(o => {
-        try {
-          const roomOptions = Array.isArray(room.booking_options) ? room.booking_options : JSON.parse(room.booking_options as unknown as string || '[]');
-          return roomOptions.includes(o);
-        } catch (e) {
-          return false;
-        }
+        const roomOptions = parseListField((room as any).booking_options);
+        return roomOptions.includes(o);
       });
       const matchHostLanguages = activeFilters.hostLanguages.every(l => {
-        try {
-          const roomLangs = Array.isArray(room.host_languages) ? room.host_languages : JSON.parse(room.host_languages as unknown as string || '[]');
-          return roomLangs.includes(l);
-        } catch (e) {
-          return false;
-        }
+        const roomLangs = parseListField((room as any).host_languages);
+        return roomLangs.includes(l);
       });
 
       return matchSearch && matchMinPrice && matchMaxPrice && matchRoomType && matchGuests && matchBeds && matchBaths && matchAmenities && matchBookingOptions && matchHostLanguages;
@@ -391,7 +433,7 @@ export default function RoomList() {
                           onClick={(e) => toggleWishlist(e, room.id)}
                           className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
                         >
-                          <Heart className={`w-6 h-6 ${wishlistIds.includes(room.id) ? 'text-rose-500 fill-rose-500' : 'text-white fill-black/30'}`} strokeWidth={1.5} />
+                          <Heart className={`w-6 h-6 ${wishlistIds.includes(room.id) ? 'text-emerald-500 fill-emerald-500' : 'text-white fill-black/30'}`} strokeWidth={1.5} />
                         </button>
                       </div>
 
@@ -452,74 +494,12 @@ export default function RoomList() {
                 <div className="pb-8 border-b border-slate-200">
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Khoảng giá</h3>
                   <p className="text-slate-500 mb-6">Giá chuyến đi, đã bao gồm mọi khoản phí</p>
-                  
-                  <div className="px-4">
-                    <div className="relative h-16 flex items-end gap-1 mb-2">
-                      {/* Fake bar chart */}
-                      {[12, 8, 14, 6, 10, 16, 9, 7, 12, 5, 11, 15, 20, 18, 14, 10, 24, 16, 12, 8].map((h, idx) => {
-                        const minIndex = Math.floor((tempFilters.priceRange[0] / 20000000) * 20);
-                        const maxIndex = Math.ceil((tempFilters.priceRange[1] / 20000000) * 20);
-                        const isActive = idx >= minIndex && idx < maxIndex;
-                        return (
-                          <div 
-                            key={idx} 
-                            className={`flex-1 rounded-t-sm transition-colors ${isActive ? 'bg-slate-800' : 'bg-slate-200'}`} 
-                            style={{ height: `${h * 3}px` }} 
-                          />
-                        );
-                      })}
-                    </div>
-                    <Range
-                      min={0}
-                      max={20000000}
-                      step={100000}
-                      value={tempFilters.priceRange}
-                      allowCross={false}
-                      onChange={(val) => setTempFilters({...tempFilters, priceRange: val as [number, number]})}
-                      railStyle={{ backgroundColor: '#e5e7eb', height: 4, borderRadius: 999 }}
-                      trackStyle={[
-                        { backgroundColor: '#000000', height: 4 },
-                        { backgroundColor: '#000000', height: 4 }
-                      ]}
-                      handleStyle={[
-                        { borderColor: '#000000', backgroundColor: '#ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: 32, height: 32, marginTop: -14, opacity: 1 },
-                        { borderColor: '#000000', backgroundColor: '#ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: 32, height: 32, marginTop: -14, opacity: 1 }
-                      ]}
-                    />
-                    <div className="flex items-center justify-between mt-8 gap-4">
-                      <div className="flex-1 border border-slate-400 rounded-xl px-3 py-2 focus-within:border-black focus-within:border-2 focus-within:p-[7px]">
-                        <div className="text-xs text-slate-500">Tối thiểu</div>
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium mr-1">₫</span>
-                          <input 
-                            type="text" 
-                            value={tempFilters.priceRange[0] === 0 ? '0' : tempFilters.priceRange[0].toLocaleString('vi-VN')}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value.replace(/\D/g, '')) || 0;
-                              setTempFilters({...tempFilters, priceRange: [Math.min(val, tempFilters.priceRange[1]), tempFilters.priceRange[1]]});
-                            }}
-                            className="w-full text-sm font-medium outline-none"
-                          />
-                        </div>
-                      </div>
-                      <div className="text-slate-400">-</div>
-                      <div className="flex-1 border border-slate-400 rounded-xl px-3 py-2 focus-within:border-black focus-within:border-2 focus-within:p-[7px]">
-                        <div className="text-xs text-slate-500">Tối đa</div>
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium mr-1">₫</span>
-                          <input 
-                            type="text" 
-                            value={tempFilters.priceRange[1] === 0 ? '0' : tempFilters.priceRange[1].toLocaleString('vi-VN') + (tempFilters.priceRange[1] >= 20000000 ? '+' : '')}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value.replace(/\D/g, '')) || 0;
-                              setTempFilters({...tempFilters, priceRange: [tempFilters.priceRange[0], Math.max(val, tempFilters.priceRange[0])]});
-                            }}
-                            className="w-full text-sm font-medium outline-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+
+                  <PriceHistogram
+                    rooms={rooms}
+                    priceRange={tempFilters.priceRange}
+                    setPriceRange={(range) => setTempFilters({...tempFilters, priceRange: range})}
+                  />
                 </div>
 
                 {/* Loại nơi ở */}
@@ -599,12 +579,12 @@ export default function RoomList() {
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Tiện nghi</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {AMENITIES_LIST.map((amenity) => {
-                      const isSelected = tempFilters.amenities.includes(amenity.name);
+                      const isSelected = tempFilters.amenities.includes(amenity.key);
                       const Icon = amenity.icon;
                       return (
                         <motion.button
-                          key={amenity.name}
-                          onClick={() => toggleTempSelection(amenity.name, 'amenities')}
+                          key={amenity.key}
+                          onClick={() => toggleTempSelection(amenity.key, 'amenities')}
                           whileTap={{ scale: 0.95 }}
                           className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${
                             isSelected 

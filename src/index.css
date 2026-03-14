@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+/* Calendar popover cleanup for RoomDetail date picker. */
+.compact-date-picker .rdrCalendarWrapper {
+	border: none !important;
+	background: transparent !important;
+	width: 100%;
+}
+
+.compact-date-picker .rdrDateDisplayWrapper {
+	display: none;
+}
+
+.compact-date-picker .rdrMonthsHorizontal {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.compact-date-picker .rdrMonth {
+	width: 320px;
+	padding: 0 10px 6px;
+	border: none !important;
+	background: transparent !important;
+}
+
+.compact-date-picker .rdrMonthAndYearWrapper {
+	height: 48px;
+	padding-top: 0;
+}
+
+.compact-date-picker .rdrWeekDays,
+.compact-date-picker .rdrDays {
+	border: none !important;
+}
+
+.compact-date-picker .rdrMonthName,
+.compact-date-picker .rdrWeekDay,
+.compact-date-picker .rdrDayNumber span {
+	font-size: 15px;
+}
+
+@media (max-width: 1023px) {
+	.compact-date-popover {
+		left: 0;
+		right: 0;
+		width: min(96vw, 46rem);
+	}
+
+	.compact-date-picker .rdrMonthsHorizontal {
+		display: block;
+	}
+
+	.compact-date-picker .rdrMonth {
+		width: 100%;
+		min-width: 0;
+	}
+}

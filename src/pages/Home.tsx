@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Star, Heart } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Room } from '../types';
 import toast from 'react-hot-toast';
@@ -13,7 +13,6 @@ export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const { token, user } = useAuth();
-  const navigate = useNavigate();
 
   // 1. Tải danh sách phòng
   useEffect(() => {
@@ -85,7 +84,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <div className="h-40 md:h-44 w-full" aria-hidden />
+      <div className="h-52 md:h-56 w-full" aria-hidden />
+
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-12">
           <div>
@@ -110,7 +110,7 @@ export default function Home() {
                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> 4.9
                 </div>
                 <button onClick={(e) => toggleWishlist(e, room.id)} className="absolute top-4 left-4 p-2 rounded-full bg-black/20 hover:bg-black/40 transition-all z-10">
-                  <Heart className={`w-5 h-5 ${wishlistIds.includes(room.id) ? 'text-rose-500 fill-rose-500' : 'text-white'}`} />
+                  <Heart className={`w-5 h-5 ${wishlistIds.includes(room.id) ? 'text-emerald-500 fill-emerald-500' : 'text-white'}`} />
                 </button>
               </div>
               <div className="p-6">

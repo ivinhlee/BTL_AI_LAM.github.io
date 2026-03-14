@@ -1,6 +1,9 @@
 -- Xóa bảng cũ nếu tồn tại
 DROP TABLE IF EXISTS tours;
+DROP TABLE IF EXISTS wishlists;
 DROP TABLE IF EXISTS bookings;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS users;
 
 -- Bảng Người dùng
@@ -14,17 +17,6 @@ CREATE TABLE IF NOT EXISTS users (
   is_admin INTEGER DEFAULT 0,
   avatar_url TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Bảng Danh sách yêu thích
-CREATE TABLE IF NOT EXISTS wishlists (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  room_id INTEGER NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (room_id) REFERENCES rooms(id),
-  UNIQUE(user_id, room_id)
 );
 
 -- Bảng Chỗ ở (Y hệt Airbnb)
@@ -46,6 +38,34 @@ CREATE TABLE IF NOT EXISTS rooms (
   host_languages TEXT,         -- Ngôn ngữ chủ nhà (JSON)
   room_type TEXT,              -- Loại phòng (Phòng/Toàn bộ nhà)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng Danh sách yêu thích
+CREATE TABLE IF NOT EXISTS wishlists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  room_id INTEGER NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (room_id) REFERENCES rooms(id),
+  UNIQUE(user_id, room_id)
+);
+
+-- Bảng Đánh giá chi tiết theo 6 tiêu chí
+CREATE TABLE IF NOT EXISTS reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_id INTEGER NOT NULL,
+  user_name TEXT NOT NULL,
+  avatar_url TEXT,
+  comment TEXT,
+  cleanliness REAL NOT NULL,
+  accuracy REAL NOT NULL,
+  check_in REAL NOT NULL,
+  communication REAL NOT NULL,
+  location REAL NOT NULL,
+  value REAL NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
 
 -- Bảng Đơn đặt phòng

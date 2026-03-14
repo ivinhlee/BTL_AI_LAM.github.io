@@ -83,8 +83,8 @@ export default function Wishlist() {
 
       {wishlist.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm">
-          <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Heart className="w-10 h-10 text-rose-500" />
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Heart className="w-10 h-10 text-emerald-500" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Tạo danh sách yêu thích đầu tiên của bạn</h2>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
@@ -116,7 +116,7 @@ export default function Wishlist() {
                   }}
                   className="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors z-10"
                 >
-                  <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+                  <Heart className="w-5 h-5 text-emerald-500 fill-emerald-500" />
                 </button>
               </div>
 
