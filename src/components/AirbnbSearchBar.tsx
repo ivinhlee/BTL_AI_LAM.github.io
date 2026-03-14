@@ -141,31 +141,37 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
     label: string;
     subLabel: string;
     field: keyof typeof guests;
-  }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
-      <div>
-        <p className="font-semibold text-slate-900">{label}</p>
-        <p className="text-xs text-slate-500">{subLabel}</p>
+  }) => {
+    const isMin = guests[field] <= (field === 'adults' ? 1 : 0);
+    return (
+      <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
+        <div>
+          <p className="font-semibold text-slate-900">{label}</p>
+          <p className="text-xs text-slate-500">{subLabel}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleGuestChange(field, -1)}
+            disabled={isMin}
+            aria-label={`Giảm số lượng ${label.toLowerCase()}`}
+            className="w-8 h-8 rounded-full border border-slate-300 hover:border-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+          >
+            -
+          </button>
+          <span aria-live="polite" className="w-6 text-center font-semibold text-slate-900">{guests[field]}</span>
+          <button
+            type="button"
+            onClick={() => handleGuestChange(field, 1)}
+            aria-label={`Tăng số lượng ${label.toLowerCase()}`}
+            className="w-8 h-8 rounded-full border border-slate-300 hover:border-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+          >
+            +
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => handleGuestChange(field, -1)}
-          className="w-8 h-8 rounded-full border border-slate-300 hover:border-slate-700 transition-colors"
-        >
-          -
-        </button>
-        <span className="w-6 text-center font-semibold text-slate-900">{guests[field]}</span>
-        <button
-          type="button"
-          onClick={() => handleGuestChange(field, 1)}
-          className="w-8 h-8 rounded-full border border-slate-300 hover:border-slate-700 transition-colors"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderPopover = () => {
     if (!activePanel) return null;
