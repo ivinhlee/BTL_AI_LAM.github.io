@@ -329,6 +329,22 @@ async function startServer() {
     }
   });
 
+  // Admin: approve a booking
+  app.put("/api/admin/bookings/:id/approve", authenticateToken, requireAdmin, (req, res) => {
+    try {
+      const { id } = req.params;
+      const stmt = db.prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
+      const result = stmt.run(id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      res.json({ message: "Booking approved successfully" });
+    } catch (error) {
+      console.error("Error approving booking:", error);
+      res.status(500).json({ error: "Failed to approve booking" });
+    }
+  });
+
   // Admin: clear all bookings
   app.delete("/api/admin/bookings", authenticateToken, requireAdmin, (req, res) => {
     try {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2, Plus, Trash2, ShieldCheck, XCircle, RefreshCw, ListChecks, Search, CheckSquare, Globe, Star } from 'lucide-react';
+import { Home, MapPin, Map, DollarSign, Users, BedDouble, Bath, Image as ImageIcon, FileText, Loader2, Plus, Trash2, ShieldCheck, XCircle, RefreshCw, ListChecks, Search, CheckSquare, Globe, Star, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Room } from '../types';
@@ -117,6 +117,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const approveBooking = async (id: number) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}/approve`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi duyệt đặt phòng');
+      toast.success('Duyệt đặt phòng thành công');
+      // Update local state to remove the approved booking from view (status changes to 'confirmed')
+      setBookings(bookings.map(b => b.booking_id === id ? { ...b, status: 'confirmed' } : b));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
+    }
+  };
+
   useEffect(() => {
     if (token) fetchAllBookings();
   }, [token]);
@@ -225,6 +242,9 @@ export default function AdminDashboard() {
   const isAdmin = !!user?.is_admin;
 
   const filteredBookings = bookings.filter((b) => {
+    // Only show pending bookings as requested
+    if ((b.status || 'pending') !== 'pending') return false;
+
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -689,11 +709,12 @@ export default function AdminDashboard() {
                         <th className="text-left px-3 py-2">Khách</th>
                         <th className="text-left px-3 py-2">Tổng</th>
                         <th className="text-left px-3 py-2">Trạng thái</th>
+                        <th className="text-center px-3 py-2">Hành động</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredBookings.map((b) => (
-                        <tr key={b.booking_id} className="hover:bg-slate-50">
+                        <tr key={b.booking_id} className="hover:bg-slate-50 transition-colors">
                           <td className="px-3 py-2 font-medium text-slate-900">
                             <div>{b.customer_name}</div>
                             <div className="text-xs text-slate-500">{b.customer_email}</div>
@@ -706,7 +727,20 @@ export default function AdminDashboard() {
                           <td className="px-3 py-2">{formatDate(b.check_out_date)}</td>
                           <td className="px-3 py-2">{guestLabel(b)}</td>
                           <td className="px-3 py-2 text-emerald-600 font-semibold">{formatPrice(b.total_price)}</td>
-                          <td className="px-3 py-2 text-slate-600">{b.status || 'pending'}</td>
+                          <td className="px-3 py-2">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                              Chờ duyệt
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => approveBooking(b.booking_id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:bg-emerald-600 transition-colors shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              Duyệt
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

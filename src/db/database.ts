@@ -58,6 +58,19 @@ db.exec(`
     FOREIGN KEY (room_id) REFERENCES rooms(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
+`);
+
+// Add 'status' column to existing 'bookings' table if it doesn't exist
+try {
+  db.exec("ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'pending'");
+} catch (error: any) {
+  // If the error is not about the column already existing, re-throw it
+  if (!error.message.includes('duplicate column name')) {
+    console.error('Error adding status column:', error);
+  }
+}
+
+db.exec(`
 
   CREATE TABLE IF NOT EXISTS wishlists (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
