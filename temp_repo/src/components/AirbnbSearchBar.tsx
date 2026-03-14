@@ -49,6 +49,17 @@ export default function AirbnbSearchBar({ onSearch }: SearchBarProps) {
     <div className="relative w-full flex justify-center py-4">
       {/* Overlay để đóng popup khi click ra ngoài */}
       <AnimatePresence>
+        {activeTab && (
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/20 z-30"
+            onClick={() => setActiveTab(null)}
+          />
+        )}
       </AnimatePresence>
 
       {/* THANH SEARCH CHÍNH */}

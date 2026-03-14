@@ -11,12 +11,10 @@ export default function Header() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
@@ -32,16 +30,10 @@ export default function Header() {
     return location.pathname.startsWith(path);
   };
 
-  const isRoomsPage = location.pathname === '/rooms';
-  const effectiveIsScrolled = isScrolled || isRoomsPage;
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-      }
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsSearchExpanded(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -53,12 +45,7 @@ export default function Header() {
       setIsScrolled(false);
       return;
     }
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-      if (window.scrollY > 100) {
-        setIsSearchExpanded(false);
-      }
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 100);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMinimal]);
@@ -77,9 +64,9 @@ export default function Header() {
   return (
     <header className="fixed top-0 w-full z-50 bg-white border-b shadow-sm transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`relative flex items-center justify-between transition-all duration-200 ${isMinimal ? 'h-16 md:h-18' : effectiveIsScrolled ? 'h-20' : 'h-32 md:h-40'}`}>
+        <div className={`relative flex items-center justify-between transition-all duration-200 ${isMinimal ? 'h-16 md:h-18' : isScrolled ? 'h-20' : 'h-32 md:h-40'}`}>
           {/* Logo */}
-          <Link to="/" className={`flex items-center gap-2 group ${isRoomsPage ? 'hidden md:flex' : 'flex'}`}>
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="bg-emerald-500 p-2 rounded-xl group-hover:bg-emerald-600 transition-colors">
               <Home className="w-6 h-6 text-white" />
             </div>
@@ -90,9 +77,9 @@ export default function Header() {
 
           {/* SEARCH TRUNG TÂM: ẩn trong chế độ tối giản */}
           {!isMinimal && (
-            <div ref={searchContainerRef} className={`absolute top-1/2 -translate-y-1/2 pointer-events-none flex items-center ${isRoomsPage ? 'left-4 right-16 md:left-48 md:right-48 justify-between' : 'left-1/2 -translate-x-1/2 justify-center w-full'}`}>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none w-full flex justify-center">
               <AnimatePresence mode="wait">
-                {(!isScrolled && !isRoomsPage) || isSearchExpanded ? (
+                {!isScrolled ? (
                   <motion.div
                     key="search-big"
                     initial={{ y: -12, opacity: 0 }}
@@ -101,51 +88,25 @@ export default function Header() {
                     transition={{ duration: 0.25 }}
                     className="pointer-events-auto w-full max-w-4xl"
                   >
-                    <AirbnbSearchBar 
-                      onSearch={(data) => {
-                        setIsSearchExpanded(false);
-                        const params = new URLSearchParams();
-                        if (data.location.trim()) params.set('location', data.location.trim());
-                        const totalGuests = data.guests.adults + data.guests.children;
-                        if (totalGuests > 0) params.set('guests', String(totalGuests));
-                        navigate({ pathname: '/rooms', search: params.toString() });
-                      }} 
-                    />
+                    <AirbnbSearchBar />
                   </motion.div>
                 ) : (
-                  <motion.div
+                  <motion.button
                     key="search-pill"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className={`pointer-events-auto flex items-center ${isRoomsPage ? 'w-full justify-between' : ''}`}
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="pointer-events-auto hidden md:flex items-center gap-4 px-6 py-2 border rounded-full shadow-sm hover:shadow-md bg-white text-slate-800"
                   >
-                    <button
-                      onClick={() => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        setIsSearchExpanded(true);
-                      }}
-                      className="flex items-center gap-2 md:gap-4 px-4 md:px-6 py-2 border rounded-full shadow-sm hover:shadow-md bg-white text-slate-800"
-                    >
-                      <span className="text-xs md:text-sm font-bold border-r pr-2 md:pr-4">Địa điểm bất kỳ</span>
-                      <span className="hidden sm:inline text-xs md:text-sm font-bold border-r pr-2 md:pr-4">Tuần bất kỳ</span>
-                      <span className="hidden sm:inline text-xs md:text-sm text-gray-500">Thêm khách</span>
-                      <div className="p-1.5 md:p-2 bg-rose-500 rounded-full text-white">
-                        <Search size={14} className="md:w-4 md:h-4" />
-                      </div>
-                    </button>
-                    
-                    {isRoomsPage && (
-                      <button 
-                        onClick={() => window.dispatchEvent(new CustomEvent('openFilterModal'))}
-                        className="ml-4 flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-300 rounded-full font-medium text-slate-700 hover:border-slate-800 transition-colors shadow-sm shrink-0"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>
-                        <span className="hidden sm:inline">Bộ lọc</span>
-                      </button>
-                    )}
-                  </motion.div>
+                    <span className="text-sm font-bold border-r pr-4">Địa điểm bất kỳ</span>
+                    <span className="text-sm font-bold border-r pr-4">Tuần bất kỳ</span>
+                    <span className="text-sm text-gray-500">Thêm khách</span>
+                    <div className="p-2 bg-rose-500 rounded-full text-white">
+                      <Search size={16} />
+                    </div>
+                  </motion.button>
                 )}
               </AnimatePresence>
             </div>
@@ -153,6 +114,17 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
+            {!isMinimal && navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`text-sm font-medium transition-colors hover:text-emerald-500 ${
+                  isActive(link.path) ? 'text-emerald-500' : 'text-slate-600'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
             
             {user ? (
               <div className="relative" ref={dropdownRef}>

@@ -104,7 +104,7 @@ export default function Wishlist() {
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden rounded-2xl mb-3">
                 <img
-                  src={room.image_url.split(',')[0]}
+                  src={room.image_url}
                   alt={room.title}
                   className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />

@@ -32,7 +32,6 @@ export default function RoomDetail() {
       key: 'selection'
     }
   ]);
-  const [hasSelectedDates, setHasSelectedDates] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGuestPicker, setShowGuestPicker] = useState(false);
   const [guests, setGuests] = useState({ adults: 1, children: 0, infants: 0, pets: 0 });
@@ -65,12 +64,11 @@ export default function RoomDetail() {
   // Tính số đêm
   const selection = dateRange[0];
 
-  const checkInDate = hasSelectedDates && selection.startDate ? format(selection.startDate, 'yyyy-MM-dd') : '';
-  const checkOutDate = hasSelectedDates && selection.endDate ? format(selection.endDate, 'yyyy-MM-dd') : '';
+  const checkInDate = selection.startDate ? format(selection.startDate, 'yyyy-MM-dd') : '';
+  const checkOutDate = selection.endDate ? format(selection.endDate, 'yyyy-MM-dd') : '';
   const totalGuests = guests.adults + guests.children + guests.infants;
 
   const calculateNights = () => {
-    if (!hasSelectedDates) return 0;
     if (!selection.startDate || !selection.endDate) return 0;
     const diffTime = Math.abs(selection.endDate.getTime() - selection.startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -150,7 +148,7 @@ export default function RoomDetail() {
 
   const checkAvailability = async () => {
     if (!room) return false;
-    if (!hasSelectedDates || !selection.startDate || !selection.endDate || nights <= 0) {
+    if (!selection.startDate || !selection.endDate || nights <= 0) {
       toast.error('Vui lòng chọn ngày nhận và trả phòng');
       setShowDatePicker(true);
       return false;
@@ -425,13 +423,13 @@ export default function RoomDetail() {
                       <div className="p-4 border-r">
                         <p className="text-xs font-bold text-slate-700 uppercase">Nhận phòng</p>
                         <p className="text-lg font-semibold text-slate-900 mt-1">
-                          {hasSelectedDates && selection.startDate ? format(selection.startDate, 'd/M/yyyy') : 'Thêm ngày'}
+                          {selection.startDate ? format(selection.startDate, 'd/M/yyyy') : 'Thêm ngày'}
                         </p>
                       </div>
                       <div className="p-4">
                         <p className="text-xs font-bold text-slate-700 uppercase">Trả phòng</p>
                         <p className="text-lg font-semibold text-slate-900 mt-1">
-                          {hasSelectedDates && selection.endDate ? format(selection.endDate, 'd/M/yyyy') : 'Thêm ngày'}
+                          {selection.endDate ? format(selection.endDate, 'd/M/yyyy') : 'Thêm ngày'}
                         </p>
                       </div>
                     </div>
@@ -542,7 +540,7 @@ export default function RoomDetail() {
                     }`}
                     disabled={isBooking || checkingAvailability}
                     onClick={() => {
-                      if (!hasSelectedDates || !selection.startDate || !selection.endDate) {
+                      if (!selection.startDate || !selection.endDate) {
                         setShowDatePicker(true);
                       }
                       setShowGuestPicker(false);
@@ -593,11 +591,11 @@ export default function RoomDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="border rounded-xl p-3">
                   <p className="text-xs font-bold text-slate-700 uppercase">Nhận phòng</p>
-                  <p className="text-base font-semibold text-slate-900 mt-1">{hasSelectedDates && selection.startDate ? format(selection.startDate, 'dd/MM/yyyy') : 'Thêm ngày'}</p>
+                  <p className="text-base font-semibold text-slate-900 mt-1">{format(selection.startDate, 'dd/MM/yyyy')}</p>
                 </div>
                 <div className="border rounded-xl p-3">
                   <p className="text-xs font-bold text-slate-700 uppercase">Trả phòng</p>
-                  <p className="text-base font-semibold text-slate-900 mt-1">{hasSelectedDates && selection.endDate ? format(selection.endDate, 'dd/MM/yyyy') : 'Thêm ngày'}</p>
+                  <p className="text-base font-semibold text-slate-900 mt-1">{format(selection.endDate, 'dd/MM/yyyy')}</p>
                 </div>
               </div>
 
@@ -607,7 +605,6 @@ export default function RoomDetail() {
                   onChange={(item: RangeKeyDict) => {
                     const sel = item.selection as any;
                     setDateRange([sel]);
-                    setHasSelectedDates(true);
                   }}
                   months={2}
                   direction="horizontal"
@@ -619,7 +616,8 @@ export default function RoomDetail() {
 
               <div className="flex items-center justify-between pt-2">
                 <button className="text-sm font-semibold text-slate-700 underline" onClick={() => {
-                  setHasSelectedDates(false);
+                  const today = new Date();
+                  setDateRange([{ startDate: today, endDate: new Date(today.getTime() + 86400000), key: 'selection' }]);
                 }}>
                   Xóa ngày
                 </button>

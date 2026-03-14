@@ -118,7 +118,7 @@ export default function Trips() {
             <div key={booking.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
               <div className="md:w-1/3 h-48 md:h-auto relative">
                 <img
-                  src={booking.image_url.split(',')[0]}
+                  src={booking.image_url}
                   alt={booking.title}
                   className="w-full h-full object-cover"
                 />

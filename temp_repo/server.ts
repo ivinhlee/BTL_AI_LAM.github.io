@@ -39,21 +39,6 @@ function runMigrations() {
   } catch (err) {
     // Ignore if column already exists
   }
-  try {
-    db.prepare('ALTER TABLE rooms ADD COLUMN amenities TEXT').run();
-  } catch (err) {}
-  try {
-    db.prepare('ALTER TABLE rooms ADD COLUMN booking_options TEXT').run();
-  } catch (err) {}
-  try {
-    db.prepare('ALTER TABLE rooms ADD COLUMN accessibility TEXT').run();
-  } catch (err) {}
-  try {
-    db.prepare('ALTER TABLE rooms ADD COLUMN host_languages TEXT').run();
-  } catch (err) {}
-  try {
-    db.prepare('ALTER TABLE rooms ADD COLUMN room_type TEXT').run();
-  } catch (err) {}
 }
 
 async function ensureAdminUser() {
@@ -190,19 +175,7 @@ async function startServer() {
 
       query += ' ORDER BY created_at DESC';
 
-      const rooms = db.prepare(query).all(...params).map((room: any) => {
-        try {
-          return {
-            ...room,
-            amenities: room.amenities ? JSON.parse(room.amenities) : [],
-            booking_options: room.booking_options ? JSON.parse(room.booking_options) : [],
-            accessibility: room.accessibility ? JSON.parse(room.accessibility) : [],
-            host_languages: room.host_languages ? JSON.parse(room.host_languages) : [],
-          };
-        } catch (e) {
-          return room; // fallback if JSON.parse fails
-        }
-      });
+      const rooms = db.prepare(query).all(...params);
       res.json(rooms);
     } catch (error) {
       console.error("Error fetching rooms:", error);
@@ -288,19 +261,10 @@ async function startServer() {
   app.get("/api/rooms/:id", (req, res) => {
     try {
       const { id } = req.params;
-      const room = db.prepare('SELECT * FROM rooms WHERE id = ?').get(id) as any;
+      const room = db.prepare('SELECT * FROM rooms WHERE id = ?').get(id);
       
       if (!room) {
         return res.status(404).json({ error: "Room not found" });
-      }
-      
-      try {
-        room.amenities = room.amenities ? JSON.parse(room.amenities) : [];
-        room.booking_options = room.booking_options ? JSON.parse(room.booking_options) : [];
-        room.accessibility = room.accessibility ? JSON.parse(room.accessibility) : [];
-        room.host_languages = room.host_languages ? JSON.parse(room.host_languages) : [];
-      } catch (e) {
-        // ignore parse error
       }
       
       res.json(room);
@@ -313,35 +277,21 @@ async function startServer() {
   // Create a room (Admin)
   app.post("/api/rooms", authenticateToken, (req: any, res: any) => {
     try {
-      const { 
-        title, location, address, category, price_per_night, 
-        max_guests, bed_count, bath_count, description, image_url,
-        amenities, booking_options, accessibility, host_languages, room_type 
-      } = req.body;
+      const { title, location, address, category, price_per_night, max_guests, bed_count, bath_count, description, image_url } = req.body;
 
       if (!title || !location || !price_per_night) {
         return res.status(400).json({ error: "Title, location, and price are required" });
       }
 
-      const safeAmenities = amenities ? (typeof amenities === 'string' ? amenities : JSON.stringify(amenities)) : null;
-      const safeBookingOptions = booking_options ? (typeof booking_options === 'string' ? booking_options : JSON.stringify(booking_options)) : null;
-      const safeAccessibility = accessibility ? (typeof accessibility === 'string' ? accessibility : JSON.stringify(accessibility)) : null;
-      const safeHostLanguages = host_languages ? (typeof host_languages === 'string' ? host_languages : JSON.stringify(host_languages)) : null;
-
       const stmt = db.prepare(`
-        INSERT INTO rooms (
-          title, location, address, category, price_per_night, 
-          max_guests, bed_count, bath_count, description, image_url,
-          amenities, booking_options, accessibility, host_languages, room_type
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO rooms (title, location, address, category, price_per_night, max_guests, bed_count, bath_count, description, image_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const result = stmt.run(
         title, location, address || '', category || 'Căn hộ', 
         price_per_night, max_guests || 1, bed_count || 1, bath_count || 1, 
-        description || '', image_url || '',
-        safeAmenities, safeBookingOptions, safeAccessibility, safeHostLanguages, room_type || null
+        description || '', image_url || ''
       );
 
       res.status(201).json({ message: "Room created successfully", roomId: result.lastInsertRowid });

@@ -40,11 +40,6 @@ CREATE TABLE IF NOT EXISTS rooms (
   max_guests INTEGER DEFAULT 2,
   bed_count INTEGER DEFAULT 1,
   bath_count INTEGER DEFAULT 1,
-  amenities TEXT,              -- Tiện nghi (JSON)
-  booking_options TEXT,        -- Tùy chọn đặt phòng (JSON)
-  accessibility TEXT,          -- Lối vào cho người khuyết tật (JSON)
-  host_languages TEXT,         -- Ngôn ngữ chủ nhà (JSON)
-  room_type TEXT,              -- Loại phòng (Phòng/Toàn bộ nhà)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

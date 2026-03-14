@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapPin, Users, BedDouble, Bath, AlertCircle, Search, Filter, SlidersHorizontal, Heart } from 'lucide-react';
+import { MapPin, Users, BedDouble, Bath, AlertCircle, Search, Filter, SlidersHorizontal, Heart, X, CheckSquare, ShieldCheck, Globe, Wifi, Waves, ChefHat, Wind, WashingMachine, Tv, Car, Flame, Bath as BathIcon, Sun, TreePine, UtensilsCrossed, Monitor, Scissors, Shirt } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Slider from 'rc-slider';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
@@ -11,6 +11,32 @@ import 'rc-slider/assets/index.css';
 
 const Range = (Slider as any).Range || (() => null);
 
+const AMENITIES_LIST = [
+  { name: 'Wifi', icon: Wifi },
+  { name: 'Bể bơi', icon: Waves },
+  { name: 'Bếp', icon: ChefHat },
+  { name: 'Điều hòa', icon: Wind },
+  { name: 'Máy giặt', icon: WashingMachine },
+  { name: 'TV', icon: Tv },
+  { name: 'Chỗ đỗ xe', icon: Car },
+  { name: 'Lò sưởi', icon: Flame },
+  { name: 'Bồn tắm nước nóng', icon: BathIcon },
+  { name: 'Sân trong hoặc ban công', icon: Sun },
+  { name: 'Sân sau', icon: TreePine },
+  { name: 'Lò nướng BBQ', icon: UtensilsCrossed },
+  { name: 'Bàn làm việc', icon: Monitor },
+  { name: 'Máy sấy tóc', icon: Scissors },
+  { name: 'Bàn ủi', icon: Shirt }
+];
+
+const BOOKING_OPTIONS_LIST = [
+  'Tự nhận phòng', 'Hủy miễn phí', 'Cho phép mang theo thú cưng'
+];
+
+const HOST_LANGUAGES_LIST = [
+  'Tiếng Anh', 'Tiếng Việt', 'Tiếng Pháp', 'Tiếng Tây Ban Nha', 'Tiếng Trung', 'Tiếng Nhật', 'Tiếng Hàn'
+];
+
 // Hàm format tiền tệ VNĐ
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -20,6 +46,8 @@ export default function RoomList() {
   const [searchParams] = useSearchParams();
   const initialLocation = searchParams.get('location') || '';
   const initialGuests = searchParams.get('guests') || '';
+  const initialBeds = searchParams.get('beds') || '';
+  const initialBaths = searchParams.get('baths') || '';
   const navigate = useNavigate();
 
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -28,39 +56,33 @@ export default function RoomList() {
   const [error, setError] = useState<string | null>(null);
   const { token, user } = useAuth();
 
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState(initialLocation);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000000]);
-  const [minGuests, setMinGuests] = useState<number | ''>(initialGuests ? Number(initialGuests) : '');
-  const [minBeds, setMinBeds] = useState<number | ''>('');
-  const [minBaths, setMinBaths] = useState<number | ''>('');
-  const [category, setCategory] = useState<string>('all');
-  
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const searchTerm = searchParams.get('location') || '';
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setPriceRange([0, 20000000]);
-    setMinGuests('');
-    setMinBeds('');
-    setMinBaths('');
-    setCategory('all');
-    navigate('/rooms');
-  };
+  // Active filters applied to the list
+  const [activeFilters, setActiveFilters] = useState({
+    priceRange: [0, 20000000] as [number, number],
+    roomType: 'Bất kỳ loại nào',
+    minGuests: initialGuests ? Number(initialGuests) : ('' as number | ''),
+    minBeds: initialBeds ? Number(initialBeds) : ('' as number | ''),
+    minBaths: initialBaths ? Number(initialBaths) : ('' as number | ''),
+    amenities: [] as string[],
+    bookingOptions: [] as string[],
+    hostLanguages: [] as string[]
+  });
+
+  // Temporary filters inside the modal
+  const [tempFilters, setTempFilters] = useState(activeFilters);
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Luôn lấy toàn bộ phòng, để frontend tự lọc
         const response = await fetch(`/api/rooms`);
-
         if (!response.ok) {
           throw new Error('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
         }
-
         const data = await response.json();
         setRooms(data);
       } catch (err) {
@@ -69,18 +91,18 @@ export default function RoomList() {
         setLoading(false);
       }
     };
-
     fetchRooms();
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
-    const trimmedSearch = searchTerm.trim();
-    if (trimmedSearch) params.set('location', trimmedSearch);
-    if (minGuests !== '') params.set('guests', String(minGuests));
-
+    const currentLoc = searchParams.get('location');
+    if (currentLoc) params.set('location', currentLoc);
+    if (activeFilters.minGuests !== '') params.set('guests', String(activeFilters.minGuests));
+    if (activeFilters.minBeds !== '') params.set('beds', String(activeFilters.minBeds));
+    if (activeFilters.minBaths !== '') params.set('baths', String(activeFilters.minBaths));
     navigate({ search: params.toString() }, { replace: true });
-  }, [searchTerm, minGuests, navigate]);
+  }, [activeFilters.minGuests, activeFilters.minBeds, activeFilters.minBaths, navigate]);
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -90,9 +112,7 @@ export default function RoomList() {
       }
       try {
         const response = await fetch('/api/wishlist', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           const data = await response.json();
@@ -102,25 +122,21 @@ export default function RoomList() {
         console.error('Lỗi khi tải danh sách yêu thích:', error);
       }
     };
-
     fetchWishlist();
   }, [token]);
 
   const toggleWishlist = async (e: React.MouseEvent, roomId: number) => {
-    e.preventDefault(); // Prevent navigating to room detail
+    e.preventDefault();
     if (!user) {
       toast.error('Vui lòng đăng nhập để lưu vào danh sách yêu thích');
       return;
     }
-
     const isWishlisted = wishlistIds.includes(roomId);
     try {
       if (isWishlisted) {
         const response = await fetch(`/api/wishlist/${roomId}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           setWishlistIds(wishlistIds.filter(id => id !== roomId));
@@ -145,318 +161,509 @@ export default function RoomList() {
     }
   };
 
-  // Lọc danh sách phòng dựa trên các tiêu chí
-  const filteredRooms = useMemo(() => {
+  // Live count logic for the modal
+  const liveCount = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const hasSearch = normalizedSearch.length > 0;
 
     return rooms.filter((room) => {
-      // 1. Tìm kiếm theo tên hoặc địa điểm
       const matchSearch = !hasSearch ||
         room.title.toLowerCase().includes(normalizedSearch) ||
         room.location.toLowerCase().includes(normalizedSearch) ||
         room.address.toLowerCase().includes(normalizedSearch);
       
-      // 2. Lọc theo giá theo slider
-      const matchMinPrice = room.price_per_night >= priceRange[0];
-      const matchMaxPrice = room.price_per_night <= priceRange[1];
+      const matchMinPrice = room.price_per_night >= tempFilters.priceRange[0];
+      const matchMaxPrice = room.price_per_night <= tempFilters.priceRange[1];
       
-      // 3. Lọc theo số lượng khách, giường, phòng tắm
-      const matchGuests = minGuests === '' || room.max_guests >= Number(minGuests);
-      const matchBeds = minBeds === '' || room.bed_count >= Number(minBeds);
-      const matchBaths = minBaths === '' || room.bath_count >= Number(minBaths);
+      const matchRoomType = tempFilters.roomType === 'Bất kỳ loại nào' || room.room_type === tempFilters.roomType;
       
-      // 4. Lọc theo loại phòng
-      const matchCategory = category === 'all' || room.category === category;
+      const matchGuests = tempFilters.minGuests === '' || room.max_guests >= Number(tempFilters.minGuests);
+      const matchBeds = tempFilters.minBeds === '' || room.bed_count >= Number(tempFilters.minBeds);
+      const matchBaths = tempFilters.minBaths === '' || room.bath_count >= Number(tempFilters.minBaths);
+      
+      const matchAmenities = tempFilters.amenities.every(a => {
+        try {
+          const roomAmenities = Array.isArray(room.amenities) ? room.amenities : JSON.parse(room.amenities as unknown as string || '[]');
+          return roomAmenities.includes(a);
+        } catch (e) {
+          return false;
+        }
+      });
+      const matchBookingOptions = tempFilters.bookingOptions.every(o => {
+        try {
+          const roomOptions = Array.isArray(room.booking_options) ? room.booking_options : JSON.parse(room.booking_options as unknown as string || '[]');
+          return roomOptions.includes(o);
+        } catch (e) {
+          return false;
+        }
+      });
+      const matchHostLanguages = tempFilters.hostLanguages.every(l => {
+        try {
+          const roomLangs = Array.isArray(room.host_languages) ? room.host_languages : JSON.parse(room.host_languages as unknown as string || '[]');
+          return roomLangs.includes(l);
+        } catch (e) {
+          return false;
+        }
+      });
 
-      return matchSearch && matchMinPrice && matchMaxPrice && matchGuests && matchBeds && matchBaths && matchCategory;
+      return matchSearch && matchMinPrice && matchMaxPrice && matchRoomType && matchGuests && matchBeds && matchBaths && matchAmenities && matchBookingOptions && matchHostLanguages;
+    }).length;
+  }, [rooms, searchTerm, tempFilters]);
+
+  // Filtered rooms for the main list
+  const filteredRooms = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const hasSearch = normalizedSearch.length > 0;
+
+    return rooms.filter((room) => {
+      const matchSearch = !hasSearch ||
+        room.title.toLowerCase().includes(normalizedSearch) ||
+        room.location.toLowerCase().includes(normalizedSearch) ||
+        room.address.toLowerCase().includes(normalizedSearch);
+      
+      const matchMinPrice = room.price_per_night >= activeFilters.priceRange[0];
+      const matchMaxPrice = room.price_per_night <= activeFilters.priceRange[1];
+      
+      const matchRoomType = activeFilters.roomType === 'Bất kỳ loại nào' || room.room_type === activeFilters.roomType;
+      
+      const matchGuests = activeFilters.minGuests === '' || room.max_guests >= Number(activeFilters.minGuests);
+      const matchBeds = activeFilters.minBeds === '' || room.bed_count >= Number(activeFilters.minBeds);
+      const matchBaths = activeFilters.minBaths === '' || room.bath_count >= Number(activeFilters.minBaths);
+      
+      const matchAmenities = activeFilters.amenities.every(a => {
+        try {
+          const roomAmenities = Array.isArray(room.amenities) ? room.amenities : JSON.parse(room.amenities as unknown as string || '[]');
+          return roomAmenities.includes(a);
+        } catch (e) {
+          return false;
+        }
+      });
+      const matchBookingOptions = activeFilters.bookingOptions.every(o => {
+        try {
+          const roomOptions = Array.isArray(room.booking_options) ? room.booking_options : JSON.parse(room.booking_options as unknown as string || '[]');
+          return roomOptions.includes(o);
+        } catch (e) {
+          return false;
+        }
+      });
+      const matchHostLanguages = activeFilters.hostLanguages.every(l => {
+        try {
+          const roomLangs = Array.isArray(room.host_languages) ? room.host_languages : JSON.parse(room.host_languages as unknown as string || '[]');
+          return roomLangs.includes(l);
+        } catch (e) {
+          return false;
+        }
+      });
+
+      return matchSearch && matchMinPrice && matchMaxPrice && matchRoomType && matchGuests && matchBeds && matchBaths && matchAmenities && matchBookingOptions && matchHostLanguages;
     });
-  }, [rooms, searchTerm, priceRange, minGuests, minBeds, minBaths, category]);
+  }, [rooms, searchTerm, activeFilters]);
 
-  // Lấy danh sách các loại phòng duy nhất để làm filter
-  const categories = useMemo(() => {
-    const cats = new Set(rooms.map(room => room.category));
-    return ['all', ...Array.from(cats)];
-  }, [rooms]);
+  const openFilterModal = () => {
+    setTempFilters(activeFilters);
+    setIsFilterModalOpen(true);
+  };
+
+  useEffect(() => {
+    const handleOpenFilter = () => openFilterModal();
+    window.addEventListener('openFilterModal', handleOpenFilter);
+    return () => window.removeEventListener('openFilterModal', handleOpenFilter);
+  }, [activeFilters]);
+
+  const applyFilters = () => {
+    setActiveFilters(tempFilters);
+    setIsFilterModalOpen(false);
+  };
+
+  const clearTempFilters = () => {
+    setTempFilters({
+      priceRange: [0, 20000000],
+      roomType: 'Bất kỳ loại nào',
+      minGuests: '',
+      minBeds: '',
+      minBaths: '',
+      amenities: [],
+      bookingOptions: [],
+      hostLanguages: []
+    });
+  };
+
+  const toggleTempSelection = (item: string, listKey: 'amenities' | 'bookingOptions' | 'hostLanguages') => {
+    setTempFilters(prev => {
+      const list = prev[listKey];
+      if (list.includes(item)) {
+        return { ...prev, [listKey]: list.filter(i => i !== item) };
+      } else {
+        return { ...prev, [listKey]: [...list, item] };
+      }
+    });
+  };
+
+  const updateCounter = (key: 'minGuests' | 'minBeds' | 'minBaths', delta: number) => {
+    setTempFilters(prev => {
+      const current = prev[key] === '' ? 0 : Number(prev[key]);
+      const next = Math.max(0, current + delta);
+      return { ...prev, [key]: next === 0 ? '' : next };
+    });
+  };
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Danh sách Phòng</h1>
-            <p className="text-slate-500 text-lg">Khám phá {filteredRooms.length} chỗ ở tuyệt vời</p>
-          </div>
-          
-          {/* Nút bật tắt filter trên mobile */}
-          <button 
-            onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-            className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 shadow-sm"
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-            {showFiltersMobile ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
-          </button>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-          
-          {/* Sidebar Bộ lọc */}
-          <div className={`w-full md:w-72 shrink-0 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 ${showFiltersMobile ? 'block' : 'hidden md:block'}`}>
-            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-              <Filter className="w-5 h-5 text-emerald-600" />
-              <h2 className="text-lg font-bold text-slate-900">Bộ lọc tìm kiếm</h2>
+    <div className="bg-white min-h-screen pt-20 md:pt-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Danh sách phòng */}
+        <div className="w-full">
+          {loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <RoomSkeleton key={i} />
+              ))}
             </div>
+          )}
 
-            <div className="space-y-6">
-              {/* Tìm kiếm */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Tìm kiếm</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Tên phòng, địa điểm..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                </div>
-              </div>
-
-              {/* Loại chỗ ở */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Loại chỗ ở</label>
-                <select 
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none"
-                >
-                  <option value="all">Tất cả các loại</option>
-                  {categories.filter(c => c !== 'all').map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Khoảng giá */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Khoảng giá (VNĐ/đêm)</label>
-                <div className="relative px-1 pt-6 pb-4">
-                  <div className="absolute inset-x-0 top-4 h-12 flex items-end gap-1 pointer-events-none opacity-40">
-                    {[12, 8, 14, 6, 10, 16, 9, 7, 12, 5, 11, 15].map((h, idx) => (
-                      <div key={idx} className="flex-1 bg-emerald-200/60 rounded-sm" style={{ height: `${h * 4}px` }} />
-                    ))}
-                  </div>
-                  <Range
-                    min={0}
-                    max={20000000}
-                    step={100000}
-                    value={priceRange}
-                    allowCross={false}
-                    onChange={(val) => setPriceRange(val as [number, number])}
-                    railStyle={{ backgroundColor: '#e5e7eb', height: 8, borderRadius: 999 }}
-                    trackStyle={[
-                      { backgroundColor: '#10b981', height: 8 },
-                      { backgroundColor: '#10b981', height: 8 }
-                    ]}
-                    handleStyle={[
-                      { borderColor: '#10b981', backgroundColor: '#ffffff', boxShadow: '0 6px 18px rgba(16, 185, 129, 0.35)', width: 20, height: 20, marginTop: -6 },
-                      { borderColor: '#10b981', backgroundColor: '#ffffff', boxShadow: '0 6px 18px rgba(16, 185, 129, 0.35)', width: 20, height: 20, marginTop: -6 }
-                    ]}
-                  />
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-700 mt-4">
-                    <span>{formatPrice(priceRange[0])}</span>
-                    <span>{formatPrice(priceRange[1])}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tiện ích */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <p className="text-sm font-bold text-slate-900">Tiện ích tối thiểu</p>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm text-slate-600 flex items-center gap-2">
-                    <Users className="w-4 h-4" /> Số khách
-                  </label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    placeholder="Bất kỳ"
-                    value={minGuests}
-                    onChange={(e) => setMinGuests(e.target.value ? Number(e.target.value) : '')}
-                    className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm text-slate-600 flex items-center gap-2">
-                    <BedDouble className="w-4 h-4" /> Số giường
-                  </label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    placeholder="Bất kỳ"
-                    value={minBeds}
-                    onChange={(e) => setMinBeds(e.target.value ? Number(e.target.value) : '')}
-                    className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm text-slate-600 flex items-center gap-2">
-                    <Bath className="w-4 h-4" /> Phòng tắm
-                  </label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    placeholder="Bất kỳ"
-                    value={minBaths}
-                    onChange={(e) => setMinBaths(e.target.value ? Number(e.target.value) : '')}
-                    className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Nút xóa bộ lọc */}
+          {!loading && error && (
+            <div className="flex flex-col items-center justify-center h-64 bg-red-50 rounded-2xl border border-red-100">
+              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+              <p className="text-red-700 font-medium text-center px-4 mb-4">{error}</p>
               <button 
-                onClick={clearFilters}
-                className="w-full py-2.5 text-sm font-bold text-emerald-600 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors mt-4"
+                onClick={() => window.location.reload()}
+                className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-sm"
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredRooms.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
+              <Search className="w-12 h-12 text-slate-300 mb-4" />
+              <h3 className="text-lg font-bold text-slate-900 mb-1">Không tìm thấy phòng phù hợp</h3>
+              <p className="text-slate-500 text-sm mb-4">Hãy thử thay đổi bộ lọc tìm kiếm của bạn.</p>
+              <button
+                onClick={() => {
+                  navigate('/rooms');
+                  setActiveFilters({
+                    priceRange: [0, 20000000],
+                    roomType: 'Bất kỳ loại nào',
+                    minGuests: '',
+                    minBeds: '',
+                    minBaths: '',
+                    amenities: [],
+                    bookingOptions: [],
+                    hostLanguages: []
+                  });
+                }}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold shadow-sm"
               >
                 Xóa bộ lọc
               </button>
             </div>
-          </div>
+          )}
 
-          {/* Danh sách phòng */}
-          <div className="flex-1">
-            {/* 1. Trạng thái Loading */}
-            {loading && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <RoomSkeleton key={i} />
-                ))}
-              </div>
-            )}
-
-            {/* 2. Trạng thái Error */}
-            {!loading && error && (
-              <div className="flex flex-col items-center justify-center h-64 bg-red-50 rounded-2xl border border-red-100">
-                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                <p className="text-red-700 font-medium text-center px-4 mb-4">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-sm"
-                >
-                  Thử lại
-                </button>
-              </div>
-            )}
-
-            {/* 3. Trạng thái Empty (Không có dữ liệu) */}
-            {!loading && !error && filteredRooms.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-64 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <Search className="w-12 h-12 text-slate-300 mb-4" />
-                <h3 className="text-lg font-bold text-slate-900 mb-1">Không tìm thấy phòng phù hợp</h3>
-                <p className="text-slate-500 text-sm mb-4">Hãy thử thay đổi bộ lọc tìm kiếm của bạn.</p>
-                <button
-                  onClick={clearFilters}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-semibold shadow-sm"
-                >
-                  Xóa bộ lọc
-                </button>
-              </div>
-            )}
-
-            {/* 4. Trạng thái Success (Hiển thị Grid) */}
-            {!loading && !error && filteredRooms.length > 0 && (
-              <motion.div 
-                layout 
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                <AnimatePresence mode="popLayout">
-                  {filteredRooms.map((room) => (
-                    <motion.div
-                      key={room.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.3 }}
+          {!loading && !error && filteredRooms.length > 0 && (
+            <motion.div 
+              layout 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredRooms.map((room) => (
+                  <motion.div
+                    key={room.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Link 
+                      to={`/rooms/${room.id}`} 
+                      className="group flex flex-col relative"
                     >
-                      <Link 
-                        to={`/rooms/${room.id}`} 
-                        className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300 border border-slate-100 flex flex-col relative"
-                      >
-                        {/* Ảnh Thumbnail & Badge Category */}
-                        <div className="relative aspect-[4/3] overflow-hidden bg-slate-200 rounded-xl">
-                          <img 
-                            src={room.image_url} 
-                            alt={room.title} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-bold text-slate-800 shadow-sm z-10">
-                            {room.category}
-                          </div>
-                          {/* Heart Button */}
-                          <button
-                            onClick={(e) => toggleWishlist(e, room.id)}
-                            className="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 transition-colors z-10"
-                          >
-                            <Heart className={`w-5 h-5 ${wishlistIds.includes(room.id) ? 'text-rose-500 fill-rose-500' : 'text-white'}`} />
-                          </button>
-                        </div>
+                      {/* Ảnh Thumbnail */}
+                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-2xl mb-3">
+                        <img 
+                          src={room.image_url.split(',')[0]} 
+                          alt={room.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        {/* Heart Button */}
+                        <button
+                          onClick={(e) => toggleWishlist(e, room.id)}
+                          className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
+                        >
+                          <Heart className={`w-6 h-6 ${wishlistIds.includes(room.id) ? 'text-rose-500 fill-rose-500' : 'text-white fill-black/30'}`} strokeWidth={1.5} />
+                        </button>
+                      </div>
 
-                        {/* Nội dung Card */}
-                        <div className="p-5 flex flex-col flex-grow">
-                          <div className="flex items-center gap-1.5 text-slate-500 text-sm mb-2.5">
-                            <MapPin className="w-4 h-4 shrink-0 text-emerald-500" />
-                            <span className="truncate">{room.location}</span>
-                          </div>
-                          
-                          <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-600 transition-colors leading-snug">
-                            {room.title}
+                      {/* Nội dung Card */}
+                      <div className="flex flex-col">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-base font-bold text-slate-900 line-clamp-1">
+                            {room.location}
                           </h3>
-
-                          {/* Tiện ích cơ bản */}
-                          <div className="flex items-center gap-4 text-slate-500 text-sm mb-4">
-                            <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              <span>{room.max_guests}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <BedDouble className="w-4 h-4" />
-                              <span>{room.bed_count}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Bath className="w-4 h-4" />
-                              <span>{room.bath_count}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-auto pt-4 border-t border-slate-100 flex items-end justify-between">
-                            <div className="text-slate-500 text-sm">
-                              Giá mỗi đêm
-                            </div>
-                            <div className="text-right">
-                              <span className="text-xl font-bold text-emerald-600">
-                                {formatPrice(room.price_per_night)}
-                              </span>
-                            </div>
-                          </div>
                         </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </div>
+                        <p className="text-slate-500 text-sm line-clamp-1">{room.title}</p>
+                        <p className="text-slate-500 text-sm">{room.max_guests} khách · {room.bed_count} giường</p>
+                        <div className="mt-1 flex items-center gap-1">
+                          <span className="font-bold text-slate-900">{formatPrice(room.price_per_night)}</span>
+                          <span className="text-slate-900">/ đêm</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       </div>
+
+      {/* Filter Modal */}
+      <AnimatePresence>
+        {isFilterModalOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsFilterModalOpen(false)}
+              className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-x-0 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:w-[780px] md:max-h-[85vh] bg-white md:rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+                <button onClick={() => setIsFilterModalOpen(false)} className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-slate-700" />
+                </button>
+                <h2 className="text-lg font-bold text-slate-900">Bộ lọc</h2>
+                <div className="w-9" /> {/* Spacer for centering */}
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                
+                {/* Khoảng giá */}
+                <div className="pb-8 border-b border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Khoảng giá</h3>
+                  <p className="text-slate-500 mb-6">Giá chuyến đi, đã bao gồm mọi khoản phí</p>
+                  
+                  <div className="px-4">
+                    <div className="relative h-16 flex items-end gap-1 mb-2">
+                      {/* Fake bar chart */}
+                      {[12, 8, 14, 6, 10, 16, 9, 7, 12, 5, 11, 15, 20, 18, 14, 10, 24, 16, 12, 8].map((h, idx) => {
+                        const minIndex = Math.floor((tempFilters.priceRange[0] / 20000000) * 20);
+                        const maxIndex = Math.ceil((tempFilters.priceRange[1] / 20000000) * 20);
+                        const isActive = idx >= minIndex && idx < maxIndex;
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`flex-1 rounded-t-sm transition-colors ${isActive ? 'bg-slate-800' : 'bg-slate-200'}`} 
+                            style={{ height: `${h * 3}px` }} 
+                          />
+                        );
+                      })}
+                    </div>
+                    <Range
+                      min={0}
+                      max={20000000}
+                      step={100000}
+                      value={tempFilters.priceRange}
+                      allowCross={false}
+                      onChange={(val) => setTempFilters({...tempFilters, priceRange: val as [number, number]})}
+                      railStyle={{ backgroundColor: '#e5e7eb', height: 4, borderRadius: 999 }}
+                      trackStyle={[
+                        { backgroundColor: '#000000', height: 4 },
+                        { backgroundColor: '#000000', height: 4 }
+                      ]}
+                      handleStyle={[
+                        { borderColor: '#000000', backgroundColor: '#ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: 32, height: 32, marginTop: -14, opacity: 1 },
+                        { borderColor: '#000000', backgroundColor: '#ffffff', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: 32, height: 32, marginTop: -14, opacity: 1 }
+                      ]}
+                    />
+                    <div className="flex items-center justify-between mt-8 gap-4">
+                      <div className="flex-1 border border-slate-400 rounded-xl px-3 py-2 focus-within:border-black focus-within:border-2 focus-within:p-[7px]">
+                        <div className="text-xs text-slate-500">Tối thiểu</div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium mr-1">₫</span>
+                          <input 
+                            type="text" 
+                            value={tempFilters.priceRange[0] === 0 ? '0' : tempFilters.priceRange[0].toLocaleString('vi-VN')}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value.replace(/\D/g, '')) || 0;
+                              setTempFilters({...tempFilters, priceRange: [Math.min(val, tempFilters.priceRange[1]), tempFilters.priceRange[1]]});
+                            }}
+                            className="w-full text-sm font-medium outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-slate-400">-</div>
+                      <div className="flex-1 border border-slate-400 rounded-xl px-3 py-2 focus-within:border-black focus-within:border-2 focus-within:p-[7px]">
+                        <div className="text-xs text-slate-500">Tối đa</div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium mr-1">₫</span>
+                          <input 
+                            type="text" 
+                            value={tempFilters.priceRange[1] === 0 ? '0' : tempFilters.priceRange[1].toLocaleString('vi-VN') + (tempFilters.priceRange[1] >= 20000000 ? '+' : '')}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value.replace(/\D/g, '')) || 0;
+                              setTempFilters({...tempFilters, priceRange: [tempFilters.priceRange[0], Math.max(val, tempFilters.priceRange[0])]});
+                            }}
+                            className="w-full text-sm font-medium outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loại nơi ở */}
+                <div className="pb-8 border-b border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Loại nơi ở</h3>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {['Bất kỳ loại nào', 'Phòng', 'Toàn bộ nhà'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setTempFilters({...tempFilters, roomType: type})}
+                        className={`flex-1 py-3 px-4 rounded-xl border font-medium transition-colors ${
+                          tempFilters.roomType === type 
+                            ? 'border-black bg-slate-100 text-black' 
+                            : 'border-slate-300 text-slate-700 hover:border-black'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Phòng và phòng ngủ */}
+                <div className="pb-8 border-b border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Phòng và phòng ngủ</h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="text-slate-800 font-medium">Khách</div>
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => updateCounter('minGuests', -1)}
+                          disabled={tempFilters.minGuests === '' || tempFilters.minGuests === 0}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 disabled:opacity-30 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >-</button>
+                        <span className="w-8 text-center">{tempFilters.minGuests === '' ? 'Bất kỳ' : tempFilters.minGuests}</span>
+                        <button 
+                          onClick={() => updateCounter('minGuests', 1)}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >+</button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-slate-800 font-medium">Phòng ngủ</div>
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => updateCounter('minBeds', -1)}
+                          disabled={tempFilters.minBeds === '' || tempFilters.minBeds === 0}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 disabled:opacity-30 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >-</button>
+                        <span className="w-8 text-center">{tempFilters.minBeds === '' ? 'Bất kỳ' : tempFilters.minBeds}</span>
+                        <button 
+                          onClick={() => updateCounter('minBeds', 1)}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >+</button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-slate-800 font-medium">Phòng tắm</div>
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => updateCounter('minBaths', -1)}
+                          disabled={tempFilters.minBaths === '' || tempFilters.minBaths === 0}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 disabled:opacity-30 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >-</button>
+                        <span className="w-8 text-center">{tempFilters.minBaths === '' ? 'Bất kỳ' : tempFilters.minBaths}</span>
+                        <button 
+                          onClick={() => updateCounter('minBaths', 1)}
+                          className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 hover:border-slate-800 hover:text-slate-800 transition-colors"
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tiện nghi */}
+                <div className="pb-8 border-b border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Tiện nghi</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {AMENITIES_LIST.map((amenity) => {
+                      const isSelected = tempFilters.amenities.includes(amenity.name);
+                      const Icon = amenity.icon;
+                      return (
+                        <motion.button
+                          key={amenity.name}
+                          onClick={() => toggleTempSelection(amenity.name, 'amenities')}
+                          whileTap={{ scale: 0.95 }}
+                          className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${
+                            isSelected 
+                              ? 'border-black bg-slate-50' 
+                              : 'border-slate-200 hover:border-slate-400'
+                          }`}
+                        >
+                          <Icon className={`w-8 h-8 ${isSelected ? 'text-black' : 'text-slate-600'}`} strokeWidth={isSelected ? 2 : 1.5} />
+                          <span className={`text-sm text-center ${isSelected ? 'font-semibold text-black' : 'text-slate-600'}`}>
+                            {amenity.name}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Tùy chọn đặt phòng */}
+                <div className="pb-8 border-b border-slate-200">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6">Tùy chọn đặt phòng</h3>
+                  <div className="space-y-4">
+                    {BOOKING_OPTIONS_LIST.map((option) => (
+                      <label key={option} className="flex items-center justify-between cursor-pointer group">
+                        <span className="text-slate-700 text-lg">{option}</span>
+                        <div className={`w-12 h-8 rounded-full transition-colors relative ${tempFilters.bookingOptions.includes(option) ? 'bg-black' : 'bg-slate-300'}`}>
+                          <input 
+                            type="checkbox" 
+                            className="sr-only"
+                            checked={tempFilters.bookingOptions.includes(option)}
+                            onChange={() => toggleTempSelection(option, 'bookingOptions')}
+                          />
+                          <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all ${tempFilters.bookingOptions.includes(option) ? 'left-5' : 'left-1'}`} />
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="border-t border-slate-200 px-6 py-4 flex items-center justify-between bg-white">
+                <button 
+                  onClick={clearTempFilters}
+                  className="font-semibold text-slate-900 underline hover:text-slate-600 transition-colors"
+                >
+                  Xóa tất cả
+                </button>
+                <button 
+                  onClick={applyFilters}
+                  className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold transition-colors shadow-md"
+                >
+                  Hiển thị {liveCount} địa điểm
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
