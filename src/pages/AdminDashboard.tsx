@@ -241,18 +241,22 @@ export default function AdminDashboard() {
 
   const isAdmin = !!user?.is_admin;
 
-  const filteredBookings = bookings.filter((b) => {
-    // Only show pending bookings as requested
-    if ((b.status || 'pending') !== 'pending') return false;
+  // ⚡ Bolt Optimization: Memoize filtered bookings to prevent expensive re-calculations on every render
+  // Impact: Reduces CPU work when typing in the search bar or when the component re-renders for other reasons
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((b) => {
+      // Only show pending bookings as requested
+      if ((b.status || 'pending') !== 'pending') return false;
 
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return true;
-    return (
-      (b.customer_name || '').toLowerCase().includes(term) ||
-      (b.customer_email || '').toLowerCase().includes(term) ||
-      (b.room_name || '').toLowerCase().includes(term)
-    );
-  });
+      const term = searchTerm.trim().toLowerCase();
+      if (!term) return true;
+      return (
+        (b.customer_name || '').toLowerCase().includes(term) ||
+        (b.customer_email || '').toLowerCase().includes(term) ||
+        (b.room_name || '').toLowerCase().includes(term)
+      );
+    });
+  }, [bookings, searchTerm]);
 
   if (!token) {
     return (
