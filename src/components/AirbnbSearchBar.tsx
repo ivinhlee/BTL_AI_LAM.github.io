@@ -284,7 +284,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
       <motion.div
         layout
         transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-        className={`w-full rounded-full border border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_10px_35px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] ${
+        className={`w-full rounded-full border border-white/50 bg-white/70 backdrop-blur-md shadow-[0_10px_35px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.7)] ${
           isHero ? 'p-1.5' : 'p-1'
         }`}
       >
