@@ -130,8 +130,8 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
   };
 
   const datePopoverClass = isHero
-    ? 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50'
-    : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50';
+    ? 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50'
+    : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50';
 
   const Counter = ({
     label,
@@ -247,7 +247,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           transition={{ duration: 0.2 }}
           className={datePopoverClass}
         >
-          <div className="overflow-x-auto flex justify-center">
+          <div className="overflow-x-hidden flex justify-center">
             <DateRange
               ranges={dateRange}
               onChange={(item: RangeKeyDict) => setDateRange([item.selection as typeof dateRange[number]])}

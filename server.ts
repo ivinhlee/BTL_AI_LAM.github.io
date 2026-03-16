@@ -82,6 +82,12 @@ function runMigrations() {
   } catch (err) {
     // Ignore if column already exists
   }
+  // Thêm cái này vào trong function runMigrations()
+try {
+  db.prepare("ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'pending'").run();
+} catch (err) {
+  // Bỏ qua nếu cột đã tồn tại
+}
   try {
     db.prepare('ALTER TABLE bookings ADD COLUMN num_adults INTEGER DEFAULT 1').run();
   } catch (err) {

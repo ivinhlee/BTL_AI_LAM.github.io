@@ -68,9 +68,13 @@ const HOST_LANGUAGES_LIST = [
   'Tiếng Anh', 'Tiếng Việt', 'Tiếng Pháp', 'Tiếng Tây Ban Nha', 'Tiếng Trung', 'Tiếng Nhật', 'Tiếng Hàn'
 ];
 
-// Hàm format tiền tệ VNĐ
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+const getRoomRating = (room: Room & Record<string, unknown>) => {
+  const raw = (room as any).avg_rating ?? (room as any).rating;
+  const numeric = typeof raw === 'string' ? Number(raw) : raw;
+  if (Number.isFinite(numeric)) {
+    return Number(numeric).toFixed(2);
+  }
+  return '4.98';
 };
 
 const parseListField = (value: unknown): string[] => {
@@ -420,36 +424,24 @@ export default function RoomList() {
                       to={`/rooms/${room.id}`} 
                       className="group flex flex-col relative"
                     >
-                      {/* Ảnh Thumbnail */}
-                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-2xl mb-3">
+                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-3xl">
                         <img 
                           src={room.image_url.split(',')[0]} 
                           alt={room.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           referrerPolicy="no-referrer"
                         />
-                        {/* Heart Button */}
                         <button
                           onClick={(e) => toggleWishlist(e, room.id)}
-                          className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
+                          className="absolute top-3 right-3 z-10 text-white transition-transform hover:scale-110"
                         >
-                          <Heart className={`w-6 h-6 ${wishlistIds.includes(room.id) ? 'text-emerald-500 fill-emerald-500' : 'text-white fill-black/30'}`} strokeWidth={1.5} />
+                          <Heart className={`w-5 h-5 drop-shadow ${wishlistIds.includes(room.id) ? 'text-white fill-white' : 'text-white/90 stroke-[2] fill-transparent'}`} />
                         </button>
                       </div>
 
-                      {/* Nội dung Card */}
-                      <div className="flex flex-col">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-base font-bold text-slate-900 line-clamp-1">
-                            {room.location}
-                          </h3>
-                        </div>
-                        <p className="text-slate-500 text-sm line-clamp-1">{room.title}</p>
-                        <p className="text-slate-500 text-sm">{room.max_guests} khách · {room.bed_count} giường</p>
-                        <div className="mt-1 flex items-center gap-1">
-                          <span className="font-bold text-slate-900">{formatPrice(room.price_per_night)}</span>
-                          <span className="text-slate-900">/ đêm</span>
-                        </div>
+                      <div className="mt-3 space-y-1">
+                        <h3 className="text-lg font-semibold text-black">{room.title}</h3>
+                        <p className="text-gray-500 text-sm">{room.bed_count} giường • ★ {getRoomRating(room)}</p>
                       </div>
                     </Link>
                   </motion.div>

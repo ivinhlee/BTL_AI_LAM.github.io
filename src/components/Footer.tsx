@@ -16,13 +16,13 @@ export default function Footer() {
               Chúng tôi mang đến những trải nghiệm lưu trú tuyệt vời nhất, giúp bạn khám phá vẻ đẹp của Việt Nam và thế giới với dịch vụ chuyên nghiệp và tận tâm.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-emerald-500 transition-colors">
+              <a href="https://www.facebook.com/MixiGaming" className="hover:text-emerald-500 transition-colors" target="_blank" rel="noopener noreferrer">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="hover:text-emerald-500 transition-colors">
+              <a href="https://www.instagram.com/mixigaming/" className="hover:text-emerald-500 transition-colors" target="_blank" rel="noopener noreferrer">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="hover:text-emerald-500 transition-colors">
+              <a href="https://twitter.com/mixigaming" className="hover:text-emerald-500 transition-colors" target="_blank" rel="noopener noreferrer">
                 <Twitter className="w-5 h-5" />
               </a>
             </div>
