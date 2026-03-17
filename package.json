@@ -40,7 +40,6 @@
     "@types/node": "^22.14.0",
     "@types/react-date-range": "^1.4.10",
     "autoprefixer": "^10.4.21",
-    "playwright": "^1.58.2",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
