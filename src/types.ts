@@ -15,6 +15,9 @@ export interface Room {
   accessibility?: string[];
   host_languages?: string[];
   room_type?: string;
+  images_list?: string;
+  reviews_list?: string;
+  amenities_list?: string;
   created_at: string;
 }
 

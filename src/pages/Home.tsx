@@ -102,7 +102,21 @@ export default function Home() {
             <Link key={room.id} to={`/rooms/${room.id}`} className="group relative bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all duration-500">
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img 
-                  src={room.image_url.split(',')[0]} // Lấy ảnh đầu tiên nếu có nhiều ảnh
+                  src={
+                    (() => {
+                      if (room.images_list && room.images_list.length > 2) {
+                        try {
+                          const parsed = JSON.parse(room.images_list);
+                          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0] !== '...') {
+                            return parsed[0];
+                          }
+                        } catch {
+                          // Ignore parse errors
+                        }
+                      }
+                      return room.image_url ? room.image_url.split(',')[0] : '';
+                    })()
+                  }
                   alt={room.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />

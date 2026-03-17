@@ -112,6 +112,15 @@ function runMigrations() {
   try {
     db.prepare('ALTER TABLE rooms ADD COLUMN room_type TEXT').run();
   } catch (err) {}
+  try {
+    db.prepare('ALTER TABLE rooms ADD COLUMN images_list TEXT').run();
+  } catch (err) {}
+  try {
+    db.prepare('ALTER TABLE rooms ADD COLUMN reviews_list TEXT').run();
+  } catch (err) {}
+  try {
+    db.prepare('ALTER TABLE rooms ADD COLUMN amenities_list TEXT').run();
+  } catch (err) {}
 
   // Reviews table for detailed 6-criteria ratings
   db.prepare(`

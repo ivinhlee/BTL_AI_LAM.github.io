@@ -37,7 +37,10 @@ db.exec(`
     accessibility TEXT,
     host_languages TEXT,
     room_type TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    images_list TEXT,
+    reviews_list TEXT,
+    amenities_list TEXT
   );
 
   CREATE TABLE IF NOT EXISTS bookings (
@@ -67,6 +70,16 @@ try {
   // If the error is not about the column already existing, re-throw it
   if (!error.message.includes('duplicate column name')) {
     console.error('Error adding status column:', error);
+  }
+}
+
+try {
+  db.exec("ALTER TABLE rooms ADD COLUMN images_list TEXT");
+  db.exec("ALTER TABLE rooms ADD COLUMN reviews_list TEXT");
+  db.exec("ALTER TABLE rooms ADD COLUMN amenities_list TEXT");
+} catch (error: any) {
+  if (!error.message.includes('duplicate column name')) {
+    console.error('Error adding new columns to rooms:', error);
   }
 }
 

@@ -421,9 +421,23 @@ export default function RoomList() {
                       className="group flex flex-col relative"
                     >
                       {/* Ảnh Thumbnail */}
-                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-2xl mb-3">
+                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-3xl mb-3 border border-slate-100 shadow-sm hover:shadow-xl transition-shadow duration-500">
                         <img 
-                          src={room.image_url.split(',')[0]} 
+                          src={
+                            (() => {
+                              if (room.images_list && room.images_list.length > 2) {
+                                try {
+                                  const parsed = JSON.parse(room.images_list);
+                                  if (Array.isArray(parsed) && parsed.length > 0 && parsed[0] !== '...') {
+                                    return parsed[0];
+                                  }
+                                } catch {
+                                  // Ignore parse errors
+                                }
+                              }
+                              return room.image_url ? room.image_url.split(',')[0] : '';
+                            })()
+                          }
                           alt={room.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           referrerPolicy="no-referrer"
@@ -438,7 +452,7 @@ export default function RoomList() {
                       </div>
 
                       {/* Nội dung Card */}
-                      <div className="flex flex-col">
+                      <div className="flex flex-col px-1">
                         <div className="flex justify-between items-start">
                           <h3 className="text-base font-bold text-slate-900 line-clamp-1">
                             {room.location}

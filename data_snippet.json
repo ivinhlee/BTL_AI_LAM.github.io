@@ -1,0 +1,83 @@
+{
+  "status": "completed",
+  "data": [
+    {
+      "timestamp": "2026-03-16T19:34:13.170Z",
+      "input": {
+        "location": "Hanoi, Vietnam",
+        "check_in": "2026-08-01T00:00:00.000Z",
+        "check_out": "2026-08-05T00:00:00.000Z",
+        "num_of_adults": 2,
+        "num_of_children": 1,
+        "num_of_pets": 0,
+        "country": "VN",
+        "num_of_infants": "",
+        "currency": ""
+      },
+      "error": "Crawl aborted on job cancel",
+      "error_code": "aborted_page"
+    },
+    {
+      "name": "Loft in Quận Hoàn Kiếm · ★4.77 · 2 bedrooms · 3 beds · 1 bath",
+      "price": 54.49,
+      "image": "https://a0.muscache.com/im/pictures/78fe1c85-e978-4d05-9905-16c5ffa5b08e.jpg",
+      "description": "-Prime location in the heart of the Old Quarter...",
+      "category": "Quận Hoàn Kiếm",
+      "availability": "true",
+      "reviews": [
+        "Very nice place to stay. Nguni is a great host",
+        "Thank you for hosting us in your home..."
+      ],
+      "ratings": 4.77,
+      "location": "Quận Hoàn Kiếm, Hà Nội, Vietnam",
+      "guests": 4,
+      "details": [
+        "4 guests",
+        "2 bedrooms",
+        "3 beds",
+        "1 bath"
+      ],
+      "images": [
+        "https://a0.muscache.com/im/pictures/78fe1c85-e978-4d05-9905-16c5ffa5b08e.jpg",
+        "https://a0.muscache.com/im/pictures/b682ad69-cbcf-4700-8ae6-5b96f32a234a.jpg"
+      ],
+      "amenities": [
+        {
+          "items": [
+            {
+              "value": "SYSTEM_HAIRDRYER",
+              "name": "Hair dryer"
+            }
+          ],
+          "group_name": "Bathroom"
+        }
+      ],
+      "reviews_details": [
+        {
+          "review_date": "2026-03-13T09:37:24Z",
+          "rating": 5,
+          "guest_name": "Harry",
+          "review": "Very nice place to stay. Nguni is a great host"
+        }
+      ],
+      "travel_details": {
+        "check_in": "2026-08-01T00:00:00.000Z",
+        "check_out": "2026-08-05T00:00:00.000Z",
+        "num_of_adults": 2,
+        "num_of_children": 1,
+        "num_of_infants": null,
+        "num_of_pets": null
+      },
+      "pricing_details": {
+        "num_of_nights": 4,
+        "initial_price_per_night": 54.49,
+        "price_per_night": 54.49,
+        "price_without_fees": 217.96,
+        "special_offer": null,
+        "cleaning_fee": null,
+        "airbnb_service_fee": null,
+        "taxes": null
+      }
+    }
+  ]
+}
