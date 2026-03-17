@@ -9,12 +9,9 @@ const dataPath = path.join(__dirname, '..', 'data.json');
 const rawData = fs.readFileSync(dataPath, 'utf8');
 const jsonData = JSON.parse(rawData);
 
-// Filter out errors
-const validRooms = jsonData.data.filter(item => item && !item.error && item.listing_title);
+console.log(`Processing ${jsonData.data.length} items from data.json...`);
 
-console.log(`Found ${validRooms.length} valid rooms to insert.`);
-
-// Delete existing rooms
+// Delete existing rooms to start fresh
 db.prepare('DELETE FROM reviews').run();
 db.prepare('DELETE FROM bookings').run();
 db.prepare('DELETE FROM wishlists').run();
@@ -22,7 +19,7 @@ const deleteStmt = db.prepare('DELETE FROM rooms');
 const deleted = deleteStmt.run();
 console.log(`Deleted ${deleted.changes} old rooms.`);
 
-const insertStmt = db.prepare(`
+const insertRoom = db.prepare(`
   INSERT INTO rooms (
     title, description, price_per_night, location, address, category, image_url,
     max_guests, bed_count, bath_count, amenities, room_type,
@@ -44,40 +41,50 @@ const extractNumber = (detailsArray, keyword) => {
   return 1;
 };
 
-const transaction = db.transaction((rooms) => {
-  for (const room of rooms) {
-    const title = room.name || room.listing_title || 'Unknown Title';
-    const description = room.description || '';
-    const price = room.price || room.pricing_details?.price_per_night || 0;
-    const location = room.location || 'Unknown Location';
-    const address = room.location || '';
-    const category = room.category || 'Rental unit';
-    const image_url = room.image || (room.images && room.images.length > 0 ? room.images[0] : '');
+// Wrap DB insert in transaction for performance
+const runSeeding = db.transaction(() => {
+  jsonData.data.forEach((item, index) => {
+    if (!item) return; // Nếu item rỗng thì bỏ qua luôn
 
-    // Parse details
-    const max_guests = room.guests || extractNumber(room.details, 'guest');
-    const bed_count = extractNumber(room.details, 'bed');
-    const bath_count = extractNumber(room.details, 'bath');
+    if (!item.error && (item.listing_title || item.name)) {
+      try {
+        const title = item.listing_title || item.name || 'Unknown Title';
+        const description = item.description || '';
+        const price = item.price || item.pricing_details?.price_per_night || 0;
+        const location = item.location || 'Unknown Location';
+        const address = item.location || '';
+        const category = item.category || 'Rental unit';
+        const image_url = item.image || (item.images && item.images.length > 0 ? item.images[0] : '');
 
-    let room_type = 'Entire home';
-    if (title.toLowerCase().includes('room') || category.toLowerCase().includes('room')) {
-      room_type = 'Private room';
+        // Parse details
+        const max_guests = item.guests || extractNumber(item.details, 'guest');
+        const bed_count = extractNumber(item.details, 'bed');
+        const bath_count = extractNumber(item.details, 'bath');
+
+        let room_type = 'Entire home';
+        if (title.toLowerCase().includes('room') || category.toLowerCase().includes('room')) {
+          room_type = 'Private room';
+        }
+
+        // Convert arrays to JSON strings
+        const images_list = JSON.stringify(item.images || []);
+        const reviews_list = JSON.stringify(item.reviews_details || item.reviews || []);
+        const amenities_list = JSON.stringify(item.amenities || []);
+        const amenities = JSON.stringify(item.amenities || []); // keeping backward compatibility
+
+        insertRoom.run(
+          title, description, price, location, address, category, image_url,
+          max_guests, bed_count, bath_count, amenities, room_type,
+          images_list, reviews_list, amenities_list
+        );
+        console.log(`[${index}] ✅ Đã nạp: ${title}`);
+      } catch (err) {
+        console.error(`[${index}] ❌ Lỗi DB tại phòng ${item.listing_title}:`, err.message);
+      }
     }
-
-    // Convert arrays to JSON strings
-    const images_list = room.images ? JSON.stringify(room.images) : null;
-    const reviews_list = room.reviews_details ? JSON.stringify(room.reviews_details) : (room.reviews ? JSON.stringify(room.reviews) : null);
-    const amenities_list = room.amenities ? JSON.stringify(room.amenities) : null;
-    const amenities = room.amenities ? JSON.stringify(room.amenities) : null; // keeping backward compatibility if needed
-
-    insertStmt.run(
-      title, description, price, location, address, category, image_url,
-      max_guests, bed_count, bath_count, amenities, room_type,
-      images_list, reviews_list, amenities_list
-    );
-  }
+  });
 });
 
-transaction(validRooms);
+runSeeding();
 
 console.log('Seeding completed successfully!');
