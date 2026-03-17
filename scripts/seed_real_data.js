@@ -52,7 +52,7 @@ function seed() {
     const title = item.name || item.listing_title || 'Unknown Room';
     const imageUrl = item.image || '';
     const description = item.description || '';
-    const price = item.price || 0;
+    const price = Math.round((item.price || 0) * 27000);
     const location = item.location || 'Vietnam';
     const address = item.location || 'Vietnam';
     const category = 'Căn hộ';

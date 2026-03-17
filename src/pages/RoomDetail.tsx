@@ -66,6 +66,8 @@ interface ReviewStats {
 interface RoomDetailData extends Room {
   review_stats?: ReviewStats;
   rating_average?: number | null;
+  images_list?: string | null;
+  amenities_list?: string | null;
 }
 
 const formatPrice = (price: number) => {
@@ -314,6 +316,16 @@ export default function RoomDetail() {
   const totalPrice = room ? room.price_per_night * nights : 0;
 
   const allImages = useMemo(() => {
+    try {
+      if (room?.images_list) {
+        const parsedImages = JSON.parse(room.images_list);
+        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+          return parsedImages;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse images_list", e);
+    }
     const parsed = room?.image_url
       ? room.image_url
           .split(',')
@@ -324,7 +336,7 @@ export default function RoomDetail() {
     if (parsed.length > 0) return parsed;
 
     return ['https://placehold.co/1200x800?text=spotbnb'];
-  }, [room?.image_url]);
+  }, [room?.image_url, room?.images_list]);
 
   const galleryImages = useMemo(() => {
     const padded = [...allImages];
@@ -347,7 +359,19 @@ export default function RoomDetail() {
     ? room.rating_average
     : criteriaValues.reduce((sum, item) => sum + item.value, 0) / REVIEW_CRITERIA.length;
 
-  const amenities = useMemo(() => parseAmenityKeys((room as any)?.amenities), [room]);
+  const amenities = useMemo(() => {
+    try {
+      if (room?.amenities_list) {
+        const parsedAmenities = JSON.parse(room.amenities_list);
+        if (Array.isArray(parsedAmenities) && parsedAmenities.length > 0) {
+          return parsedAmenities;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse amenities_list", e);
+    }
+    return parseAmenityKeys((room as any)?.amenities);
+  }, [room]);
 
   const checkAvailability = async () => {
     if (!room) return false;
