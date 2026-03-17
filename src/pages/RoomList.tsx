@@ -424,10 +424,11 @@ export default function RoomList() {
                       to={`/rooms/${room.id}`} 
                       className="group flex flex-col relative"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-slate-200 rounded-3xl">
+                      <div className="relative aspect-square overflow-hidden bg-white/30 backdrop-blur-md border border-white/20 shadow-lg rounded-[2rem]">
                         <img 
                           src={room.image_url.split(',')[0]} 
                           alt={room.title} 
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           referrerPolicy="no-referrer"
                         />
@@ -441,7 +442,7 @@ export default function RoomList() {
 
                       <div className="mt-3 space-y-1">
                         <h3 className="text-lg font-semibold text-black">{room.title}</h3>
-                        <p className="text-gray-500 text-sm">{room.bed_count} giường • ★ {getRoomRating(room)}</p>
+                        <p className="text-gray-500 text-sm">{room.bed_count} giường • ★ {getRoomRating(room as Room & Record<string, unknown>)}</p>
                       </div>
                     </Link>
                   </motion.div>
