@@ -10,7 +10,7 @@ const rawData = fs.readFileSync(dataPath, 'utf8');
 const jsonData = JSON.parse(rawData);
 
 // Filter out errors
-const validRooms = jsonData.data.filter(item => !item.error);
+const validRooms = jsonData.data.filter(item => item && !item.error && item.listing_title);
 
 console.log(`Found ${validRooms.length} valid rooms to insert.`);
 
