@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   MapPin,
@@ -30,29 +30,33 @@ import {
   Scissors,
   Shirt,
   Monitor,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const AMENITIES_LIST = [
-  { key: 'wifi', label: 'Wifi', icon: Wifi },
-  { key: 'kitchen', label: 'Bếp', icon: ChefHat },
-  { key: 'tv', label: 'TV', icon: Tv },
-  { key: 'pool', label: 'Bể bơi', icon: Waves },
-  { key: 'washer', label: 'Máy giặt', icon: WashingMachine },
-  { key: 'parking', label: 'Chỗ đỗ xe', icon: Car },
-  { key: 'air_conditioning', label: 'Điều hòa', icon: Wind },
-  { key: 'fireplace', label: 'Lò sưởi', icon: Flame },
-  { key: 'hot_tub', label: 'Bồn tắm nước nóng', icon: BathIcon },
-  { key: 'balcony', label: 'Sân trong hoặc ban công', icon: Sun },
-  { key: 'backyard', label: 'Sân sau', icon: TreePine },
-  { key: 'bbq', label: 'Lò nướng BBQ', icon: UtensilsCrossed },
-  { key: 'workspace', label: 'Bàn làm việc', icon: Monitor },
-  { key: 'hair_dryer', label: 'Máy sấy tóc', icon: Scissors },
-  { key: 'iron', label: 'Bàn ủi', icon: Shirt },
+  { key: "wifi", label: "Wifi", icon: Wifi },
+  { key: "kitchen", label: "Bếp", icon: ChefHat },
+  { key: "tv", label: "TV", icon: Tv },
+  { key: "pool", label: "Bể bơi", icon: Waves },
+  { key: "washer", label: "Máy giặt", icon: WashingMachine },
+  { key: "parking", label: "Chỗ đỗ xe", icon: Car },
+  { key: "air_conditioning", label: "Điều hòa", icon: Wind },
+  { key: "fireplace", label: "Lò sưởi", icon: Flame },
+  { key: "hot_tub", label: "Bồn tắm nước nóng", icon: BathIcon },
+  { key: "balcony", label: "Sân trong hoặc ban công", icon: Sun },
+  { key: "backyard", label: "Sân sau", icon: TreePine },
+  { key: "bbq", label: "Lò nướng BBQ", icon: UtensilsCrossed },
+  { key: "workspace", label: "Bàn làm việc", icon: Monitor },
+  { key: "hair_dryer", label: "Máy sấy tóc", icon: Scissors },
+  { key: "iron", label: "Bàn ủi", icon: Shirt },
 ];
 
-const BOOKING_OPTIONS_LIST = ['Tự nhận phòng', 'Hủy miễn phí', 'Cho phép mang theo thú cưng'];
+const BOOKING_OPTIONS_LIST = [
+  "Tự nhận phòng",
+  "Hủy miễn phí",
+  "Cho phép mang theo thú cưng",
+];
 
 export default function AdminAddRoom() {
   const navigate = useNavigate();
@@ -60,86 +64,92 @@ export default function AdminAddRoom() {
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    address: '',
-    location: '',
-    category: 'Căn hộ',
-    room_type: 'Toàn bộ nhà',
-    price_per_night: '',
-    max_guests: '',
-    bed_count: '',
-    bath_count: '',
-    description: '',
+    title: "",
+    address: "",
+    location: "",
+    category: "Căn hộ",
+    room_type: "Toàn bộ nhà",
+    price_per_night: "",
+    max_guests: "",
+    bed_count: "",
+    bath_count: "",
+    description: "",
   });
 
-  const [imageUrls, setImageUrls] = useState<string[]>(['']);
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [selectedBookingOptions, setSelectedBookingOptions] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState([""]);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [selectedBookingOptions, setSelectedBookingOptions] = useState([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const toggleAmenity = (name: string) => {
-    setSelectedAmenities((prev) => (prev.includes(name) ? prev.filter((a) => a !== name) : [...prev, name]));
-  };
-
-  const toggleBookingOption = (option: string) => {
-    setSelectedBookingOptions((prev) =>
-      prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option]
+  const toggleAmenity = (name) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(name) ? prev.filter((a) => a !== name) : [...prev, name],
     );
   };
 
-  const updateImageUrl = (index: number, value: string) => {
+  const toggleBookingOption = (option) => {
+    setSelectedBookingOptions((prev) =>
+      prev.includes(option)
+        ? prev.filter((item) => item !== option)
+        : [...prev, option],
+    );
+  };
+
+  const updateImageUrl = (index, value) => {
     setImageUrls((prev) => prev.map((item, i) => (i === index ? value : item)));
   };
 
   const addImageField = () => {
-    setImageUrls((prev) => [...prev, '']);
+    setImageUrls((prev) => [...prev, ""]);
   };
 
-  const removeImageField = (index: number) => {
-    setImageUrls((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+  const removeImageField = (index) => {
+    setImageUrls((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, i) => i !== index),
+    );
   };
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      address: '',
-      location: '',
-      category: 'Căn hộ',
-      room_type: 'Toàn bộ nhà',
-      price_per_night: '',
-      max_guests: '',
-      bed_count: '',
-      bath_count: '',
-      description: '',
+      title: "",
+      address: "",
+      location: "",
+      category: "Căn hộ",
+      room_type: "Toàn bộ nhà",
+      price_per_night: "",
+      max_guests: "",
+      bed_count: "",
+      bath_count: "",
+      description: "",
     });
-    setImageUrls(['']);
+    setImageUrls([""]);
     setSelectedAmenities([]);
     setSelectedBookingOptions([]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!token || !user?.is_admin) {
-      toast.error('Bạn cần tài khoản admin để thêm phòng');
+      toast.error("Bạn cần tài khoản admin để thêm phòng");
       return;
     }
 
     const cleanedImageUrls = imageUrls.map((url) => url.trim()).filter(Boolean);
     if (cleanedImageUrls.length === 0) {
-      toast.error('Vui lòng nhập ít nhất 1 URL ảnh');
+      toast.error("Vui lòng nhập ít nhất 1 URL ảnh");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch('/api/rooms', {
-        method: 'POST',
+      const response = await fetch("/api/rooms", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -148,7 +158,7 @@ export default function AdminAddRoom() {
           max_guests: Number(formData.max_guests),
           bed_count: Number(formData.bed_count),
           bath_count: Number(formData.bath_count),
-          image_url: cleanedImageUrls.join(','),
+          image_url: cleanedImageUrls.join(","),
           amenities: JSON.stringify(selectedAmenities),
           booking_options: JSON.stringify(selectedBookingOptions),
         }),
@@ -156,14 +166,14 @@ export default function AdminAddRoom() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || 'Không thể lưu phòng mới');
+        throw new Error(data.error || "Không thể lưu phòng mới");
       }
 
-      toast.success('Thêm phòng thành công');
+      toast.success("Thêm phòng thành công");
       resetForm();
-      navigate('/admin');
+      navigate("/admin");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
+      toast.error(error instanceof Error ? error.message : "Đã có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
@@ -174,8 +184,12 @@ export default function AdminAddRoom() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-2">
           <XCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-          <p className="text-lg font-semibold text-slate-900">Chỉ dành cho Admin</p>
-          <p className="text-slate-500">Bạn không có quyền truy cập trang này.</p>
+          <p className="text-lg font-semibold text-slate-900">
+            Chỉ dành cho Admin
+          </p>
+          <p className="text-slate-500">
+            Bạn không có quyền truy cập trang này.
+          </p>
         </div>
       </div>
     );
@@ -186,8 +200,12 @@ export default function AdminAddRoom() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-sm text-slate-500 uppercase tracking-wide">Admin</p>
-            <h1 className="text-3xl font-bold text-slate-900">Thêm Phòng Mới</h1>
+            <p className="text-sm text-slate-500 uppercase tracking-wide">
+              Admin
+            </p>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Thêm Phòng Mới
+            </h1>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -197,11 +215,15 @@ export default function AdminAddRoom() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Thông tin cơ bản</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Thông tin cơ bản
+            </h2>
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Tên phòng *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Tên phòng *
+                </label>
                 <div className="relative">
                   <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -217,7 +239,9 @@ export default function AdminAddRoom() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Địa chỉ *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Địa chỉ *
+                  </label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -231,7 +255,9 @@ export default function AdminAddRoom() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Thành phố *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Thành phố *
+                  </label>
                   <div className="relative">
                     <Map className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -248,7 +274,9 @@ export default function AdminAddRoom() {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Loại hình *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Loại hình *
+                  </label>
                   <select
                     name="category"
                     value={formData.category}
@@ -264,7 +292,9 @@ export default function AdminAddRoom() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Kiểu chỗ ở *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Kiểu chỗ ở *
+                  </label>
                   <select
                     name="room_type"
                     value={formData.room_type}
@@ -277,7 +307,9 @@ export default function AdminAddRoom() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Giá/đêm *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Giá/đêm *
+                  </label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -293,7 +325,9 @@ export default function AdminAddRoom() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Khách tối đa *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Khách tối đa *
+                  </label>
                   <div className="relative">
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -313,11 +347,15 @@ export default function AdminAddRoom() {
           </section>
 
           <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Mô tả và cấu hình phòng</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Mô tả và cấu hình phòng
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Số giường *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Số giường *
+                </label>
                 <div className="relative">
                   <BedDouble className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -333,7 +371,9 @@ export default function AdminAddRoom() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Số phòng tắm *</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Số phòng tắm *
+                </label>
                 <div className="relative">
                   <Bath className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -351,7 +391,9 @@ export default function AdminAddRoom() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Mô tả chi tiết</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Mô tả chi tiết
+              </label>
               <div className="relative">
                 <FileText className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
                 <textarea
@@ -367,7 +409,9 @@ export default function AdminAddRoom() {
           </section>
 
           <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Tiện nghi (Amenities)</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Tiện nghi (Amenities)
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {AMENITIES_LIST.map((item) => {
                 const Icon = item.icon;
@@ -376,7 +420,9 @@ export default function AdminAddRoom() {
                   <label
                     key={item.key}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
-                      selected ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                      selected
+                        ? "bg-emerald-50 border-emerald-200"
+                        : "bg-white border-slate-200 hover:bg-slate-50"
                     }`}
                   >
                     <input
@@ -385,8 +431,11 @@ export default function AdminAddRoom() {
                       onChange={() => toggleAmenity(item.key)}
                       className="w-4 h-4 text-emerald-500 rounded border-slate-300 focus:ring-emerald-500"
                     />
+
                     <Icon className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm font-medium text-slate-700">{item.label}</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {item.label}
+                    </span>
                   </label>
                 );
               })}
@@ -394,7 +443,9 @@ export default function AdminAddRoom() {
           </section>
 
           <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Tùy chọn đặt phòng</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Tùy chọn đặt phòng
+            </h2>
             <div className="space-y-3 max-w-2xl">
               {BOOKING_OPTIONS_LIST.map((option) => {
                 const selected = selectedBookingOptions.includes(option);
@@ -402,10 +453,14 @@ export default function AdminAddRoom() {
                   <label
                     key={option}
                     className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
-                      selected ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                      selected
+                        ? "bg-emerald-50 border-emerald-200"
+                        : "bg-white border-slate-200 hover:bg-slate-50"
                     }`}
                   >
-                    <span className="text-sm font-medium text-slate-700">{option}</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {option}
+                    </span>
                     <input
                       type="checkbox"
                       checked={selected}
@@ -420,7 +475,9 @@ export default function AdminAddRoom() {
 
           <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-900">Ảnh phòng (nhiều URL)</h2>
+              <h2 className="text-xl font-bold text-slate-900">
+                Ảnh phòng (nhiều URL)
+              </h2>
               <button
                 type="button"
                 onClick={addImageField}
@@ -454,13 +511,16 @@ export default function AdminAddRoom() {
               ))}
             </div>
 
-            <p className="mt-3 text-xs text-slate-500">Bạn có thể thêm hơn 5 ảnh. Hệ thống hỗ trợ tối đa 20 URL để đảm bảo hiệu năng.</p>
+            <p className="mt-3 text-xs text-slate-500">
+              Bạn có thể thêm hơn 5 ảnh. Hệ thống hỗ trợ tối đa 20 URL để đảm
+              bảo hiệu năng.
+            </p>
           </section>
 
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate("/admin")}
               className="px-5 py-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100"
             >
               Hủy

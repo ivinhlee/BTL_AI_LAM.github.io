@@ -1,34 +1,36 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, Loader2, MapPin, Star } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { Room } from '../types';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Heart, Loader2, Star } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 };
 
 export default function Wishlist() {
-  const [wishlist, setWishlist] = useState<Room[]>([]);
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const { token } = useAuth();
 
   const fetchWishlist = async () => {
     try {
-      const response = await fetch('/api/wishlist', {
+      const response = await fetch("/api/wishlist", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch wishlist');
+        throw new Error("Failed to fetch wishlist");
       }
       const data = await response.json();
       setWishlist(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
@@ -40,22 +42,22 @@ export default function Wishlist() {
     }
   }, [token]);
 
-  const removeFromWishlist = async (roomId: number) => {
+  const removeFromWishlist = async (roomId) => {
     try {
       const response = await fetch(`/api/wishlist/${roomId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (response.ok) {
-        setWishlist(wishlist.filter(room => room.id !== roomId));
-        toast.success('Đã xóa khỏi danh sách yêu thích');
+        setWishlist(wishlist.filter((room) => room.id !== roomId));
+        toast.success("Đã xóa khỏi danh sách yêu thích");
       } else {
-        toast.error('Không thể xóa khỏi danh sách yêu thích');
+        toast.error("Không thể xóa khỏi danh sách yêu thích");
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra');
+      toast.error("Đã có lỗi xảy ra");
     }
   };
 
@@ -79,16 +81,21 @@ export default function Wishlist() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Danh sách yêu thích</h1>
+      <h1 className="text-3xl font-bold text-slate-900 mb-8">
+        Danh sách yêu thích
+      </h1>
 
       {wishlist.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm">
           <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <Heart className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Tạo danh sách yêu thích đầu tiên của bạn</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+            Tạo danh sách yêu thích đầu tiên của bạn
+          </h2>
           <p className="text-slate-500 mb-8 max-w-md mx-auto">
-            Khi bạn tìm kiếm, hãy nhấp vào biểu tượng trái tim để lưu các địa điểm bạn thích vào danh sách yêu thích.
+            Khi bạn tìm kiếm, hãy nhấp vào biểu tượng trái tim để lưu các địa
+            điểm bạn thích vào danh sách yêu thích.
           </p>
           <Link
             to="/"
@@ -104,10 +111,11 @@ export default function Wishlist() {
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden rounded-2xl mb-3">
                 <img
-                  src={room.image_url.split(',')[0]}
+                  src={room.image_url.split(",")[0]}
                   alt={room.title}
                   className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
+
                 {/* Heart Button */}
                 <button
                   onClick={(e) => {
@@ -123,7 +131,9 @@ export default function Wishlist() {
               {/* Content */}
               <Link to={`/rooms/${room.id}`} className="block">
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-semibold text-slate-900 truncate pr-4">{room.title}</h3>
+                  <h3 className="font-semibold text-slate-900 truncate pr-4">
+                    {room.title}
+                  </h3>
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="w-4 h-4 fill-slate-900 text-slate-900" />
                     <span>4.9</span>
@@ -131,7 +141,9 @@ export default function Wishlist() {
                 </div>
                 <p className="text-slate-500 text-sm mb-1">{room.location}</p>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="font-semibold text-slate-900">{formatPrice(room.price_per_night)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatPrice(room.price_per_night)}
+                  </span>
                   <span className="text-slate-500 text-sm">/ đêm</span>
                 </div>
               </Link>

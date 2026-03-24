@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export const RoomSkeleton = () => (
   <div className="animate-pulse bg-white rounded-2xl overflow-hidden border border-slate-100 p-4">

@@ -1,46 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Camera, Loader2, Save, Lock } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { User, Mail, Phone, Camera, Loader2, Save, Lock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function Profile() {
   const { user, token, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    avatar_url: ''
+    name: "",
+    email: "",
+    phone: "",
+    avatar_url: "",
   });
 
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('/api/profile', {
+        const response = await fetch("/api/profile", {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         if (response.ok) {
           const data = await response.json();
           setFormData({
-            name: data.name || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            avatar_url: data.avatar_url || ''
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            avatar_url: data.avatar_url || "",
           });
         }
       } catch (error) {
-        toast.error('Không thể tải thông tin hồ sơ');
+        toast.error("Không thể tải thông tin hồ sơ");
       } finally {
         setLoading(false);
       }
@@ -51,72 +50,76 @@ export default function Profile() {
     }
   }, [token]);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePasswordChange = (e) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
+      const response = await fetch("/api/profile", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         const data = await response.json();
         updateUser(data.user);
-        toast.success('Cập nhật hồ sơ thành công');
+        toast.success("Cập nhật hồ sơ thành công");
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Cập nhật thất bại');
+        toast.error(errorData.error || "Cập nhật thất bại");
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra');
+      toast.error("Đã có lỗi xảy ra");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSavePassword = async (e: React.FormEvent) => {
+  const handleSavePassword = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Mật khẩu mới không khớp');
+      toast.error("Mật khẩu mới không khớp");
       return;
     }
 
     setSavingPassword(true);
     try {
-      const response = await fetch('/api/profile/password', {
-        method: 'PUT',
+      const response = await fetch("/api/profile/password", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
+          newPassword: passwordData.newPassword,
+        }),
       });
 
       if (response.ok) {
-        toast.success('Đổi mật khẩu thành công');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        toast.success("Đổi mật khẩu thành công");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Đổi mật khẩu thất bại');
+        toast.error(errorData.error || "Đổi mật khẩu thất bại");
       }
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra');
+      toast.error("Đã có lỗi xảy ra");
     } finally {
       setSavingPassword(false);
     }
@@ -140,7 +143,11 @@ export default function Profile() {
           <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-sm">
             <div className="relative w-32 h-32 mx-auto mb-4">
               {formData.avatar_url ? (
-                <img src={formData.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                <img
+                  src={formData.avatar_url}
+                  alt="Avatar"
+                  className="w-full h-full rounded-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center">
                   <User className="w-12 h-12 text-slate-400" />
@@ -150,7 +157,9 @@ export default function Profile() {
                 <Camera className="w-4 h-4 text-slate-600" />
               </button>
             </div>
-            <h2 className="text-xl font-bold text-slate-900">{formData.name}</h2>
+            <h2 className="text-xl font-bold text-slate-900">
+              {formData.name}
+            </h2>
             <p className="text-slate-500 text-sm mt-1">Thành viên từ 2026</p>
           </div>
         </div>
@@ -159,10 +168,14 @@ export default function Profile() {
         <div className="md:col-span-2 space-y-8">
           {/* Profile Form */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">Thông tin cá nhân</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-6">
+              Thông tin cá nhân
+            </h3>
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Họ và tên</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Họ và tên
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -177,7 +190,9 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -192,7 +207,9 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Số điện thoại
+                </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -206,7 +223,9 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL Ảnh đại diện</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  URL Ảnh đại diện
+                </label>
                 <div className="relative">
                   <Camera className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -226,7 +245,11 @@ export default function Profile() {
                   disabled={saving}
                   className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {saving ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
                   Lưu thay đổi
                 </button>
               </div>
@@ -235,10 +258,14 @@ export default function Profile() {
 
           {/* Password Form */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">Đổi mật khẩu</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-6">
+              Đổi mật khẩu
+            </h3>
             <form onSubmit={handleSavePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu hiện tại</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Mật khẩu hiện tại
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -253,7 +280,9 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu mới</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Mật khẩu mới
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -268,7 +297,9 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Xác nhận mật khẩu mới
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
@@ -288,7 +319,11 @@ export default function Profile() {
                   disabled={savingPassword}
                   className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl font-medium transition-colors disabled:opacity-50"
                 >
-                  {savingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {savingPassword ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
                   Cập nhật mật khẩu
                 </button>
               </div>
