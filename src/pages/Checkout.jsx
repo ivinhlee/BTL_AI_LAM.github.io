@@ -1,14 +1,14 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CreditCard, ShieldCheck, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CreditCard, ShieldCheck, CheckCircle2, ArrowLeft } from "lucide-react";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const bookingId = params.get('bookingId');
+  const bookingId = params.get("bookingId");
 
   const handlePay = () => {
     // Fake payment success
-    navigate('/trips', { replace: true });
+    navigate("/trips", { replace: true });
   };
 
   return (
@@ -20,7 +20,9 @@ export default function Checkout() {
           </div>
           <div>
             <p className="text-sm text-slate-500">Thanh toán</p>
-            <h1 className="text-2xl font-bold text-slate-900">Xác nhận đặt phòng</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Xác nhận đặt phòng
+            </h1>
           </div>
         </div>
 
@@ -32,7 +34,10 @@ export default function Checkout() {
         )}
 
         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600">
-          <p>Đây là bước xác nhận thanh toán giả lập. Nhấn "Thanh toán" để hoàn tất và về trang Hành trình.</p>
+          <p>
+            Đây là bước xác nhận thanh toán giả lập. Nhấn "Thanh toán" để hoàn
+            tất và về trang Hành trình.
+          </p>
         </div>
 
         <div className="flex gap-3 justify-end">

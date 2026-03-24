@@ -1,98 +1,89 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin, Search } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { DateRange, RangeKeyDict } from 'react-date-range';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { useLocation as useRouterLocation } from 'react-router-dom';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
-
-export interface SearchPayload {
-  location: string;
-  dates: {
-    startDate: Date;
-    endDate: Date;
-  };
-  guests: {
-    adults: number;
-    children: number;
-    infants: number;
-    pets: number;
-  };
-}
-
-interface SearchBarProps {
-  onSearch?: (data: SearchPayload) => void;
-  variant?: 'hero' | 'compact';
-}
-
-type SearchPanel = 'where' | 'when' | 'who' | null;
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { MapPin, Search } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { DateRange } from "react-date-range";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useLocation as useRouterLocation } from "react-router-dom";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 const RECENT_SEARCHES = [
-  { title: 'Hương Thủy', subtitle: '17-19 thg 7 · 6 khách' },
-  { title: 'Huế', subtitle: '17-19 thg 7 · 6 khách' },
-  { title: 'Đà Nẵng', subtitle: '17-19 thg 7 · 6 khách' },
+  { title: "Hương Thủy", subtitle: "17-19 thg 7 · 6 khách" },
+  { title: "Huế", subtitle: "17-19 thg 7 · 6 khách" },
+  { title: "Đà Nẵng", subtitle: "17-19 thg 7 · 6 khách" },
 ];
 
 const SUGGESTED_DESTINATIONS = [
-  { title: 'Lân cận', subtitle: 'Tìm xung quanh bạn' },
-  { title: 'Hà Nội', subtitle: 'Có các thắng cảnh như Nhà hát lớn Hà Nội' },
-  { title: 'Đà Lạt, Lâm Đồng', subtitle: 'Khách quan tâm đến Huế cũng tìm kiếm khu vực này' },
+  { title: "Lân cận", subtitle: "Tìm xung quanh bạn" },
+  { title: "Hà Nội", subtitle: "Có các thắng cảnh như Nhà hát lớn Hà Nội" },
+  {
+    title: "Đà Lạt, Lâm Đồng",
+    subtitle: "Khách quan tâm đến Huế cũng tìm kiếm khu vực này",
+  },
 ];
 
-export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: SearchBarProps) {
-  const [activePanel, setActivePanel] = useState<SearchPanel>(null);
-  const [location, setLocation] = useState('');
+export default function AirbnbSearchBar({ onSearch, variant = "compact" }) {
+  const [activePanel, setActivePanel] = useState(null);
+  const [location, setLocation] = useState("");
   const routerLocation = useRouterLocation();
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
       endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      key: 'selection',
+      key: "selection",
     },
   ]);
-  const [guests, setGuests] = useState({ adults: 1, children: 0, infants: 0, pets: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const locationInputRef = useRef<HTMLInputElement>(null);
+  const [guests, setGuests] = useState({
+    adults: 1,
+    children: 0,
+    infants: 0,
+    pets: 0,
+  });
+  const containerRef = useRef(null);
+  const locationInputRef = useRef(null);
 
   const selection = dateRange[0];
   const totalGuests = useMemo(() => guests.adults + guests.children, [guests]);
   const formattedDate = `${format(selection.startDate, "d 'thg' M", { locale: vi })} - ${format(selection.endDate, "d 'thg' M", { locale: vi })}`;
-  const guestSummary = totalGuests > 0 ? `${totalGuests} khách` : 'Thêm khách';
+  const guestSummary = totalGuests > 0 ? `${totalGuests} khách` : "Thêm khách";
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    function handleClickOutside(event) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
         setActivePanel(null);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
-    if (activePanel === 'where') {
+    if (activePanel === "where") {
       locationInputRef.current?.focus();
     }
   }, [activePanel]);
 
   useEffect(() => {
-    const queryLocation = new URLSearchParams(routerLocation.search).get('location') || '';
-    if (activePanel !== 'where') {
+    const queryLocation =
+      new URLSearchParams(routerLocation.search).get("location") || "";
+    if (activePanel !== "where") {
       setLocation(queryLocation);
     }
   }, [routerLocation.search, activePanel]);
 
-  const handleGuestChange = (key: keyof typeof guests, delta: number) => {
+  const handleGuestChange = (key, delta) => {
     setGuests((prev) => ({
       ...prev,
-      [key]: Math.max(key === 'adults' ? 1 : 0, prev[key] + delta),
+      [key]: Math.max(key === "adults" ? 1 : 0, prev[key] + delta),
     }));
   };
 
-  const triggerSearch = (nextLocation?: string) => {
+  const triggerSearch = (nextLocation) => {
     const finalLocation = (nextLocation ?? location).trim();
     setLocation(finalLocation);
     onSearch?.({
@@ -106,17 +97,17 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
     setActivePanel(null);
   };
 
-  const isHero = variant === 'hero';
+  const isHero = variant === "hero";
   const isExpanded = activePanel !== null;
-  const whereSummary = location.trim() || 'Địa điểm bất kỳ';
-  const whenSummary = isHero ? 'Thời gian bất kỳ' : formattedDate;
-  const whoSummary = isHero ? 'Thêm khách' : guestSummary;
+  const whereSummary = location.trim() || "Địa điểm bất kỳ";
+  const whenSummary = isHero ? "Thời gian bất kỳ" : formattedDate;
+  const whoSummary = isHero ? "Thêm khách" : guestSummary;
 
-  const segmentClass = (panel: Exclude<SearchPanel, null>) => {
+  const segmentClass = (panel) => {
     const selected = activePanel === panel;
     const base = isHero
-      ? 'rounded-full px-6 py-3 md:py-3.5 text-left transition-all border'
-      : 'rounded-full px-4 py-2.5 text-left transition-all border min-h-[52px] flex items-center';
+      ? "rounded-full px-6 py-3 md:py-3.5 text-left transition-all border"
+      : "rounded-full px-4 py-2.5 text-left transition-all border min-h-[52px] flex items-center";
 
     if (selected) {
       return `${base} bg-white/85 backdrop-blur-xl border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_8px_24px_rgba(15,23,42,0.12)]`;
@@ -130,19 +121,11 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
   };
 
   const datePopoverClass = isHero
-    ? 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50'
-    : 'absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50';
+    ? "absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(50rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50"
+    : "absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[min(44rem,94vw)] rounded-3xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50";
 
-  const Counter = ({
-    label,
-    subLabel,
-    field,
-  }: {
-    label: string;
-    subLabel: string;
-    field: keyof typeof guests;
-  }) => {
-    const isMin = guests[field] <= (field === 'adults' ? 1 : 0);
+  const Counter = ({ label, subLabel, field }) => {
+    const isMin = guests[field] <= (field === "adults" ? 1 : 0);
     return (
       <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
         <div>
@@ -159,7 +142,12 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           >
             -
           </button>
-          <span aria-live="polite" className="w-6 text-center font-semibold text-slate-900">{guests[field]}</span>
+          <span
+            aria-live="polite"
+            className="w-6 text-center font-semibold text-slate-900"
+          >
+            {guests[field]}
+          </span>
           <button
             type="button"
             onClick={() => handleGuestChange(field, 1)}
@@ -176,7 +164,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
   const renderPopover = () => {
     if (!activePanel) return null;
 
-    if (activePanel === 'where') {
+    if (activePanel === "where") {
       return (
         <motion.div
           key="where"
@@ -187,7 +175,9 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           className="absolute left-0 top-full mt-3 w-[min(44rem,92vw)] rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-5 z-50"
         >
           <div className="mb-5">
-            <p className="text-sm font-semibold text-slate-900 mb-3">Những tìm kiếm gần đây</p>
+            <p className="text-sm font-semibold text-slate-900 mb-3">
+              Những tìm kiếm gần đây
+            </p>
             <div className="space-y-2">
               {RECENT_SEARCHES.map((item) => (
                 <button
@@ -211,7 +201,9 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-900 mb-3">Điểm đến được đề xuất</p>
+            <p className="text-sm font-semibold text-slate-900 mb-3">
+              Điểm đến được đề xuất
+            </p>
             <div className="space-y-2">
               {SUGGESTED_DESTINATIONS.map((item) => (
                 <button
@@ -237,7 +229,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
       );
     }
 
-    if (activePanel === 'when') {
+    if (activePanel === "when") {
       return (
         <motion.div
           key="when"
@@ -250,10 +242,10 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
           <div className="overflow-x-hidden flex justify-center">
             <DateRange
               ranges={dateRange}
-              onChange={(item: RangeKeyDict) => setDateRange([item.selection as typeof dateRange[number]])}
+              onChange={(item) => setDateRange([item.selection])}
               months={2}
               direction="horizontal"
-              rangeColors={['#34C759']}
+              rangeColors={["#34C759"]}
               minDate={new Date()}
               showMonthAndYearPickers={false}
             />
@@ -274,7 +266,11 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
         <Counter label="Người lớn" subLabel="Trên 13 tuổi" field="adults" />
         <Counter label="Trẻ em" subLabel="Dưới 13 tuổi" field="children" />
         <Counter label="Em bé" subLabel="Dưới 2 tuổi" field="infants" />
-        <Counter label="Thú cưng" subLabel="Bạn mang theo thú cưng?" field="pets" />
+        <Counter
+          label="Thú cưng"
+          subLabel="Bạn mang theo thú cưng?"
+          field="pets"
+        />
       </motion.div>
     );
   };
@@ -283,13 +279,19 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
     <div ref={containerRef} className="relative w-full">
       <motion.div
         layout
-        transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+        transition={{ type: "spring", stiffness: 320, damping: 34 }}
         className={`w-full rounded-full border border-white/40 bg-white/30 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.7)] ${
-          isHero ? 'p-1.5' : 'p-1'
+          isHero ? "p-1.5" : "p-1"
         }`}
       >
-        <div className={`grid items-center gap-1 ${isHero ? 'grid-cols-[1.2fr_1fr_1fr_auto]' : 'grid-cols-[1.1fr_1fr_1fr_auto]'}`}>
-          <button type="button" onClick={() => setActivePanel('where')} className={segmentClass('where')}>
+        <div
+          className={`grid items-center gap-1 ${isHero ? "grid-cols-[1.2fr_1fr_1fr_auto]" : "grid-cols-[1.1fr_1fr_1fr_auto]"}`}
+        >
+          <button
+            type="button"
+            onClick={() => setActivePanel("where")}
+            className={segmentClass("where")}
+          >
             {isHero ? (
               <>
                 <p className="text-xs font-semibold text-slate-900">Địa điểm</p>
@@ -300,57 +302,75 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    onFocus={() => setActivePanel('where')}
+                    onFocus={() => setActivePanel("where")}
                     placeholder="Tìm kiếm điểm đến"
                     className="w-full bg-transparent outline-none text-slate-600 placeholder:text-slate-500 text-[15px]"
                   />
                 </div>
               </>
+            ) : activePanel === "where" ? (
+              <div className="flex items-center gap-2 w-full">
+                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  ref={locationInputRef}
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  onFocus={() => setActivePanel("where")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSearch();
+                    }
+                  }}
+                  placeholder="Tìm kiếm điểm đến"
+                  className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400 text-sm md:text-base"
+                />
+              </div>
             ) : (
-              activePanel === 'where' ? (
-                <div className="flex items-center gap-2 w-full">
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <input
-                    ref={locationInputRef}
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    onFocus={() => setActivePanel('where')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        triggerSearch();
-                      }
-                    }}
-                    placeholder="Tìm kiếm điểm đến"
-                    className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400 text-sm md:text-base"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm md:text-base font-semibold text-slate-800 truncate">{whereSummary}</p>
-              )
+              <p className="text-sm md:text-base font-semibold text-slate-800 truncate">
+                {whereSummary}
+              </p>
             )}
           </button>
 
-          <button type="button" onClick={() => setActivePanel('when')} className={segmentClass('when')}>
+          <button
+            type="button"
+            onClick={() => setActivePanel("when")}
+            className={segmentClass("when")}
+          >
             {isHero ? (
               <>
-                <p className="text-xs font-semibold text-slate-900">Thời gian</p>
-                <p className="text-slate-600 mt-0.5 text-[15px]">{whenSummary}</p>
+                <p className="text-xs font-semibold text-slate-900">
+                  Thời gian
+                </p>
+                <p className="text-slate-600 mt-0.5 text-[15px]">
+                  {whenSummary}
+                </p>
               </>
             ) : (
-              <p className="text-sm md:text-base font-semibold text-slate-800 truncate">{whenSummary}</p>
+              <p className="text-sm md:text-base font-semibold text-slate-800 truncate">
+                {whenSummary}
+              </p>
             )}
           </button>
 
-          <button type="button" onClick={() => setActivePanel('who')} className={segmentClass('who')}>
+          <button
+            type="button"
+            onClick={() => setActivePanel("who")}
+            className={segmentClass("who")}
+          >
             {isHero ? (
               <>
                 <p className="text-xs font-semibold text-slate-900">Khách</p>
-                <p className="text-slate-600 mt-0.5 text-[15px]">{whoSummary}</p>
+                <p className="text-slate-600 mt-0.5 text-[15px]">
+                  {whoSummary}
+                </p>
               </>
             ) : (
-              <p className="text-sm md:text-base font-semibold text-slate-800 truncate">{whoSummary}</p>
+              <p className="text-sm md:text-base font-semibold text-slate-800 truncate">
+                {whoSummary}
+              </p>
             )}
           </button>
 
@@ -364,7 +384,7 @@ export default function AirbnbSearchBar({ onSearch, variant = 'compact' }: Searc
               {(isHero || isExpanded) && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
+                  animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.18 }}
                   className="overflow-hidden whitespace-nowrap"

@@ -1,10 +1,10 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import Database from "better-sqlite3";
+import path from "path";
 
-const dbPath = path.join(process.cwd(), 'travel_tours.db');
+const dbPath = path.join(process.cwd(), "travel_tours.db");
 const db = new Database(dbPath);
 
-db.pragma('foreign_keys = ON');
+db.pragma("foreign_keys = ON");
 
 // Safe bootstrap: create tables if missing, never run destructive DROP statements at startup.
 db.exec(`
@@ -63,10 +63,10 @@ db.exec(`
 // Add 'status' column to existing 'bookings' table if it doesn't exist
 try {
   db.exec("ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'pending'");
-} catch (error: any) {
+} catch (error) {
   // If the error is not about the column already existing, re-throw it
-  if (!error.message.includes('duplicate column name')) {
-    console.error('Error adding status column:', error);
+  if (!error.message.includes("duplicate column name")) {
+    console.error("Error adding status column:", error);
   }
 }
 
